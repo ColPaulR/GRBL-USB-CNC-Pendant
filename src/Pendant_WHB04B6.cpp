@@ -2,8 +2,60 @@
 
 // For Reference:
 // https://github.com/LinuxCNC/linuxcnc/tree/master/src/hal/user_comps/xhc-WHB04B6
+void mySend_command(const char *cmd_in)
+{
+    String *cmd = new String(cmd_in);
+    cmd->concat("\n");
+    rp2040.fifo.push_nb((uint32_t)cmd);
+}
 
+void vResetButton() {
+    mySend_command("$Bye");
+}
 
+void vStopButton() {
+    mySend_command("!");  
+}
+
+void vPauseRunButton() {
+    mySend_command("~");  
+}
+
+void vFeedPlus() {
+    mySend_command("\0x91");  
+}
+
+void vFeedMinus() {
+    mySend_command("\0x92");  
+}
+
+void (*(WHB04B6BtnFx[]))() =
+{
+  vResetButton,     // Button RESET
+  vStopButton,      // Button STOP
+  vPauseRunButton,  // Button STARTPAUSE
+  vFeedPlus,        // Button M1_FEEDPLUS
+  vFeedMinus,       // Button M2_FEEDMINUS
+  NULL,             // Button M3_SPINDLEPLUS
+  NULL,             // Button M4_SPINDLEMINUS
+  NULL,             // Button M5_MHOME
+  NULL,             // Button M6_SAFEZ
+  NULL,             // Button M7_WHOME
+  NULL,             // Button M8_SPINDLEONOFF
+  NULL,             // Button FN
+  NULL,             // Button M9_PROBEZ
+  NULL,             // Button CONTINUOUS
+  NULL,             // Button STEP
+  NULL              // Button M10
+};
+
+// void (*(WHB04B6BtnFx[]))() =
+// {
+//   vResetButton,      // Button RESET
+//   vStopButton,       // Button STOP
+//   vPauseRunButton,   // Button STARTPAUSE
+//   NULL
+// };
 
 Pendant_WHB04B6::Pendant_WHB04B6(uint8_t dev_addr, uint8_t instance):
     USBHIDPendant(dev_addr, instance),
@@ -170,21 +222,31 @@ void Pendant_WHB04B6::on_key_press(uint8_t keycode)
         // update feed rate in display report data
         this->uint16_to_report_bytes(this->axis_feed_rates[axis], 16,17);
     }
-    // Send ButtonCommands 
-    if(keycode<=0x10)
+    // Send ButtonCommands
+     if(keycode<=0x10)
     {
         const char* cmd;
-        if(this->is_key_pressed(KEYCODE_FN))
-            cmd = WHB04B6ButtonCommandsFN[keycode-1];
-        else
-            cmd = WHB04B6ButtonCommands[keycode-1];
-        if(cmd[0])
+        if (this->is_key_pressed(KEYCODE_FN))
         {
-            String * cmdstr = new String(cmd);
-            this->send_command(cmdstr);
+            cmd = WHB04B6ButtonCommandsFN[keycode - 1];
+            if (cmd[0])
+            {
+                String *cmdstr = new String(cmd);
+                this->send_command(cmdstr);
+            }
         }
+        else
+            // cmd = WHB04B6ButtonCommands[keycode-1];
+            // If function at index=keycode-1 is not NULL, execute function
+            if ((*WHB04B6BtnFx[keycode - 1]))
+                (*WHB04B6BtnFx[keycode - 1])();
+            else {
+                Serial.print("Not function defined for key press: ");
+                Serial.println(keycode, HEX);
+            }
     }
 }
+
 void Pendant_WHB04B6::on_key_release(uint8_t keycode)
 {
     Serial.print("Key Release: ");
