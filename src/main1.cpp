@@ -1,9 +1,9 @@
 #include <Arduino.h>
 
 #include "USBHIDPendant.h"
-#include "Pendant_Numpad.h"
+//#include "Pendant_Numpad.h"
 #include "Pendant_WHB04B6.h"
-#include "Pendant_PS3.h"
+//#include "Pendant_PS3.h"
 
 
 // Example used as base for USB HID stuff:
@@ -172,26 +172,13 @@ void tuh_hid_mount_cb(uint8_t dev_addr, uint8_t instance, uint8_t const *desc_re
       USBHIDPendant * object = 0;
       // check if known device type and create matching object
       //
-      // Keyboard / Numpad
-      if(itf_protocol == HID_ITF_PROTOCOL_KEYBOARD)
-      {
-        Serial.printf("Found new Keyboard/Numpad device\r\n");
-        object = new Pendant_Numpad(dev_addr, instance);
-      }
-      // WHB04B-6 Wireless CNC Pendant
+      // // WHB04B-6 Wireless CNC Pendant
       // https://github.com/LinuxCNC/linuxcnc/tree/master/src/hal/user_comps/xhc-whb04b-6
       if(itf_protocol == HID_ITF_PROTOCOL_NONE && vid == 0x10ce && pid == 0xeb93)
       {
         Serial.printf("Found new WHB04B-6 device\r\n");
         object = new Pendant_WHB04B6(dev_addr, instance);
       }
-      // PS3 Dualshock Controller
-      if(itf_protocol == HID_ITF_PROTOCOL_NONE && vid == 0x054c && pid == 0x0268)
-      {
-        Serial.printf("Found new PS3 device\r\n");
-        object = new Pendant_PS3(dev_addr, instance);
-      }
-      // store object and done
       devices[i].object = object;
       break;
     }
