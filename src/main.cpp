@@ -3,7 +3,7 @@
 #include <ArduinoJson.h>
 
 #include <GCodeSerial.h>
-#include <PassThrough.h>
+//#include <PassThrough.h>
 #include "JSONReader.h"
 #include "USBHIDPendant.h"
 
@@ -12,10 +12,10 @@
 #define DuetSerialRXPin 13
 #define DuetSerialBaud 57600
 
-#define PanelDueSerial Serial2 // UART1
-#define PanelDueSerialTXPin 4
-#define PanelDueSerialRXPin 5
-#define PanelDueSerialBaud 57600
+//#define PanelDueSerial Serial2 // UART1
+//#define PanelDueSerialTXPin 4
+//#define PanelDueSerialRXPin 5
+//#define PanelDueSerialBaud 57600
 
 #define DUET_QUERY_INTERVAL 1000
 
@@ -37,8 +37,8 @@ void setup()
   DuetSerial.setTX(DuetSerialTXPin);
   DuetSerial.setRX(DuetSerialRXPin);
 
-  PanelDueSerial.setTX(PanelDueSerialTXPin);
-  PanelDueSerial.setRX(PanelDueSerialRXPin);
+  //PanelDueSerial.setTX(PanelDueSerialTXPin);
+  //PanelDueSerial.setRX(PanelDueSerialRXPin);
 
   
   //while ( !Serial ) delay(10);   // wait for native usb
@@ -52,7 +52,7 @@ void setup()
   Serial.println("Core0 Start");
 
   DuetSerial.begin(DuetSerialBaud);
-  PanelDueSerial.begin(PanelDueSerialBaud);
+  //PanelDueSerial.begin(PanelDueSerialBaud);
 }
 
 
@@ -71,30 +71,31 @@ void loop()
   // read serial from Duet, forward to PanelDue and buffer/read JSON status data
   while(DuetSerial.available())
   {
+    // TODO: Convert to readline and then parse GRBL status
     uint8_t c=DuetSerial.read();
-    PanelDueSerial.write(c);
-    jsonReader.write(c);
+    //PanelDueSerial.write(c);
+    //jsonReader.write(c);
   }
   
   // read serial from PanelDue and handle passthrough to Duet
-  unsigned int commandLength = passThrough.Check(PanelDueSerial);
-  if (commandLength != 0)
-  {
-    const char * cmd = passThrough.GetCommand();
-    uint8_t start = 0;
-    if(cmd[0]=='N') // prevent duplicate line number in line
-    {
-        for(uint8_t i=1;i<commandLength;i++)
-        {
-            if(cmd[i]<0x30 || cmd[i]>0x39) // check if still number
-            {
-              start=i+1;
-              break;
-            }
-        }
-    }
-    output.write(&(cmd[start]), commandLength-start);
-  }
+  //unsigned int commandLength = passThrough.Check(PanelDueSerial);
+  //if (commandLength != 0)
+  //{
+  //  const char * cmd = passThrough.GetCommand();
+  //  uint8_t start = 0;
+  //  if(cmd[0]=='N') // prevent duplicate line number in line
+  //  {
+  //      for(uint8_t i=1;i<commandLength;i++)
+  //      {
+  //          if(cmd[i]<0x30 || cmd[i]>0x39) // check if still number
+  //          {
+  //            start=i+1;
+  //            break;
+  //          }
+  //      }
+  //  }
+  // output.write(&(cmd[start]), commandLength-start);
+  //}
 
   // request status from Duet
   static unsigned long last_duet_query = millis();
@@ -102,7 +103,10 @@ void loop()
   if((now-last_duet_query) > DUET_QUERY_INTERVAL)
   {
     last_duet_query = now;
-    output.print("M409 F\"d99f\"\n");
+
+    // Change to GRBL status request command
+    output.print("?");
+    //output.print("M409 F\"d99f\"\n");
   }
 
   // check if complete JSON status message from Duet is ready in buffer
