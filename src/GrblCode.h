@@ -5,7 +5,7 @@
 
 #define MAX_STATUS_LEN 10
 
-struct GrbltStatus
+struct GRBLSTATUS
 {
   char  cStatus[MAX_STATUS_LEN];
   pos_t axis_WorkPosition[MAX_N_AXIS];
