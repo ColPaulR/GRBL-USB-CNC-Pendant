@@ -2,15 +2,10 @@
 #define USBHIDPendant_H
 
 #include <Arduino.h>
+#include "GrblParserC.h"
 #include "Adafruit_TinyUSB.h"
 
 #define MAX_PRESSED_KEYS 6
-
-struct DuetStatus
-{
-  double axis_userPosition[6];
-  uint16_t spindle_speed;
-};
 
 class USBHIDPendant
 {
