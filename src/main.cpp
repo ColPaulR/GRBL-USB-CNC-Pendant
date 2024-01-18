@@ -1,6 +1,6 @@
 #include <Arduino.h>
 
-// #include <GCodeSerial.h>
+//#include <lib/GrblParserC/src/GrblParserC.h>
 #include "USBHIDPendant.h"
 
 #define GRBLSerial Serial1 // UART0
@@ -9,7 +9,6 @@
 #define GRBLSerialBaud 57600
 
 #define DUET_QUERY_INTERVAL 1000
-
 //GRBLSerial output(GRBLSerial);
 
 void setup()
