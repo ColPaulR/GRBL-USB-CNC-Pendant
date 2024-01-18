@@ -4,7 +4,7 @@
 #include "GrblParserC.h"
 
 #define MAX_STATUS_LEN 10
-struct DuetStatus
+struct GrbltStatus
 {
   char  cStatus[MAX_STATUS_LEN];
   double axis_WorkPosition[6];
