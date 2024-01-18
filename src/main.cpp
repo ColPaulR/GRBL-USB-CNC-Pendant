@@ -1,6 +1,6 @@
 #include <Arduino.h>
 
-//#include <lib/GrblParserC/src/GrblParserC.h>
+#include "GrblParserC.h"
 #include "USBHIDPendant.h"
 
 #define GRBLSerial Serial1 // UART0
@@ -50,6 +50,7 @@ void loop()
   {
     // TODO: Convert to readline and then parse GRBL status
     uint8_t c = GRBLSerial.read();
+    collect(c);
   }
 
   // extract selected data from JSON message and forward to USB routine on other core
@@ -59,3 +60,12 @@ void loop()
   //   duetstatus->spindle_speed = (uint16_t)jsondoc["result"]["spindles"][0]["current"];
   // rp2040.fifo.push_nb((uint32_t)duetstatus);
 }
+
+void show_state(const char* state) {
+  Serial.printf("State reported as %s\n.", state);
+}
+
+void show_dro(const pos_t* axes, const pos_t* wcos, bool isMpos, bool* limits, size_t n_axis) {
+  Serial.printf("DRO:X%f,Y%f,Z%f\n",axes[0],axes[1],axes[2]);
+}
+
