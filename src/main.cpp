@@ -61,11 +61,3 @@ void loop()
   // rp2040.fifo.push_nb((uint32_t)duetstatus);
 }
 
-void show_state(const char* state) {
-  Serial.printf("State reported as %s\n.", state);
-}
-
-void show_dro(const pos_t* axes, const pos_t* wcos, bool isMpos, bool* limits, size_t n_axis) {
-  Serial.printf("DRO:X%f,Y%f,Z%f\n",axes[0],axes[1],axes[2]);
-}
-
