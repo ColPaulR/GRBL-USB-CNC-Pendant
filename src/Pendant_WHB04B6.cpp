@@ -253,12 +253,12 @@ void Pendant_WHB04B6::on_key_release(uint8_t keycode)
     Serial.println(keycode, HEX);
 }
 
-void Pendant_WHB04B6::duetstatus_received(DuetStatus * duetstatus)
-{
-    for(uint8_t i=0;i<6;i++)
-        this->axis_coordinates[i] = duetstatus->axis_userPosition[i];
+// void Pendant_WHB04B6::duetstatus_received(DuetStatus * duetstatus)
+// {
+//     for(uint8_t i=0;i<6;i++)
+//         this->axis_coordinates[i] = duetstatus->axis_userPosition[i];
 
-    this->uint16_to_report_bytes(duetstatus->spindle_speed, 18,19);
+//     this->uint16_to_report_bytes(duetstatus->spindle_speed, 18,19);
 
-    this->send_display_report();
-}
+//     this->send_display_report();
+// }

@@ -35,7 +35,7 @@ class Pendant_WHB04B6: public USBHIDPendant
 public:
   Pendant_WHB04B6(uint8_t dev_addr, uint8_t instance);
   void report_received(uint8_t const *report, uint16_t len) override;
-  void duetstatus_received(DuetStatus * duetstatus) override;
+  // void duetstatus_received(DuetStatus * duetstatus) override;
   void loop() override;
 private:
   void send_display_report();

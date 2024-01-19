@@ -10,7 +10,7 @@ struct GRBLSTATUS
   char  cStatus[MAX_STATUS_LEN];
   pos_t axis_WorkPosition[MAX_N_AXIS];
   pos_t axis_MachinePosition[MAX_N_AXIS];
-  uint16_t spindle_speed;
+  uint32_t spindle_speed;
 };
 
 #endif

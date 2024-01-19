@@ -9,8 +9,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 static size_t _report_len = 0;
+
 static char   _report[128];
 
 static bool _ackwait = false;

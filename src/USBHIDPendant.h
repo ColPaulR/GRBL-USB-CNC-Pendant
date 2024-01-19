@@ -2,10 +2,15 @@
 #define USBHIDPendant_H
 
 #include <Arduino.h>
-#include "GrblParserC.h"
 #include "Adafruit_TinyUSB.h"
 
 #define MAX_PRESSED_KEYS 6
+
+// struct DuetStatus
+// {
+//   double axis_userPosition[6];
+//   uint16_t spindle_speed;
+// };
 
 class USBHIDPendant
 {
@@ -13,7 +18,7 @@ public:
   USBHIDPendant(uint8_t dev_addr, uint8_t instance): kb_dev_addr(dev_addr), kb_instance(instance) {};
   virtual ~USBHIDPendant();
   virtual void report_received(uint8_t const *report, uint16_t len){};
-  virtual void duetstatus_received(DuetStatus * duetstatus){};
+  // virtual void duetstatus_received(DuetStatus * duetstatus){};
   virtual void loop(){};
 
 protected:

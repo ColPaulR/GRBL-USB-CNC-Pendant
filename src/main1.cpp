@@ -108,22 +108,22 @@ void loop1()
   }
 
   // check for new Duet status messages from Serial routines on other core
-  DuetStatus * duetstatus = 0;
-  if(rp2040.fifo.available())
-    duetstatus = (DuetStatus*)rp2040.fifo.pop();
+  // DuetStatus * duetstatus = 0;
+  // if(rp2040.fifo.available())
+  //   duetstatus = (DuetStatus*)rp2040.fifo.pop();
 
-  // loop through devices, forward Duet status messages and call loop function
-  for(uint8_t i = 0; i< MAX_DEV; i++)
-  {
-    if(devices[i].object)
-    {
-      if(duetstatus)
-        devices[i].object->duetstatus_received(duetstatus);
-      devices[i].object->loop();
-    }
-  }
+  // // loop through devices, forward Duet status messages and call loop function
+  // for(uint8_t i = 0; i< MAX_DEV; i++)
+  // {
+  //   if(devices[i].object)
+  //   {
+  //     if(duetstatus)
+  //       devices[i].object->duetstatus_received(duetstatus);
+  //     devices[i].object->loop();
+  //   }
+  // }
 
-  delete duetstatus;
+  // delete duetstatus;
 }
 
 // Invoked when device with hid interface is mounted
