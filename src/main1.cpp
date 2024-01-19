@@ -1,9 +1,7 @@
 #include <Arduino.h>
 
 #include "USBHIDPendant.h"
-//#include "Pendant_Numpad.h"
 #include "Pendant_WHB04B6.h"
-//#include "Pendant_PS3.h"
 
 
 // Example used as base for USB HID stuff:
