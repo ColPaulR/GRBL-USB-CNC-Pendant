@@ -5,6 +5,7 @@
 // https://github.com/LinuxCNC/linuxcnc/tree/master/src/hal/user_comps/xhc-WHB04B6
 
 #include "USBHIDPendant.h"
+#include "GrblCode.h"
 
 #define REPORT_INTERVAL 2000
 #define CMD_INTERVAL 20
@@ -35,7 +36,7 @@ class Pendant_WHB04B6: public USBHIDPendant
 public:
   Pendant_WHB04B6(uint8_t dev_addr, uint8_t instance);
   void report_received(uint8_t const *report, uint16_t len) override;
-  // void duetstatus_received(DuetStatus * duetstatus) override;
+  void grblstatus_received(GRBLSTATUS * grblstatus) override;
   void loop() override;
 private:
   void send_display_report();

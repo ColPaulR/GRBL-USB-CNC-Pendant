@@ -2,6 +2,7 @@
 
 #include "USBHIDPendant.h"
 #include "Pendant_WHB04B6.h"
+#include "GrblCode.h"
 
 
 // Example used as base for USB HID stuff:
@@ -107,21 +108,25 @@ void loop1()
 
   // check for new Duet status messages from Serial routines on other core
   // DuetStatus * duetstatus = 0;
-  // if(rp2040.fifo.available())
+  // Create pointer to new structure and set to null address
+  GRBLSTATUS * GrblStatus = 0;
+  if(rp2040.fifo.available())
   //   duetstatus = (DuetStatus*)rp2040.fifo.pop();
-
-  // // loop through devices, forward Duet status messages and call loop function
-  // for(uint8_t i = 0; i< MAX_DEV; i++)
-  // {
-  //   if(devices[i].object)
-  //   {
-  //     if(duetstatus)
-  //       devices[i].object->duetstatus_received(duetstatus);
-  //     devices[i].object->loop();
-  //   }
-  // }
+    GrblStatus = (GRBLSTATUS*)rp2040.fifo.pop();
+  // loop through devices, forward Duet status messages and call loop function
+  for(uint8_t i = 0; i< MAX_DEV; i++)
+  {
+    if(devices[i].object)
+    {
+      if(GrblStatus)
+        devices[i].object->grblstatus_received(GrblStatus);
+      devices[i].object->loop();
+    }
+  }
 
   // delete duetstatus;
+  // Cleanup
+  delete GrblStatus;
 }
 
 // Invoked when device with hid interface is mounted
