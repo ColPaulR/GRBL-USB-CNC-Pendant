@@ -11,6 +11,7 @@ struct GRBLSTATUS
 {
   char      cStatus[MAX_STATUS_LEN];
   int       isMpos;
+  int       nAxis;
   double    axis_Position[MAX_N_AXIS];
   double    axis_WCO[MAX_N_AXIS];
   int       spindle;
