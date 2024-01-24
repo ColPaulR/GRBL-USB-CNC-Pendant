@@ -8,8 +8,7 @@
 #define GRBLSerialRXPin 13
 #define GRBLSerialBaud 57600
 
-#define DUET_QUERY_INTERVAL 1000
-//GRBLSerial output(GRBLSerial);
+#define GRBL_QUERY_INTERVAL 1000
 
 void setup()
 {
@@ -51,13 +50,13 @@ void loop()
     // TODO: Convert to readline and then parse GRBL status
     uint8_t c = GRBLSerial.read();
     collect(c);
-    Serial.printf("%x %c\n",c,c);
+    // Serial.printf("%x %c\n",c,c);
   }
 
   // Send periodic requests
   static unsigned long last_mount_check = millis();
   unsigned long now=millis();
-  if((now-last_mount_check)>500)
+  if((now-last_mount_check)>GRBL_QUERY_INTERVAL)
   {
     last_mount_check = millis();
     // Serial.print("?\n");

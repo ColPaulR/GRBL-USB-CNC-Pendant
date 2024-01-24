@@ -47,6 +47,7 @@ void  begin_status_report() {
 
 void end_status_report()
 {
+    Serial.print("Processed Message\r\n");
     // Allocate memory, copy GrblStatus to new memory and send address across fifo
     rp2040.fifo.push_nb((uint32_t) GrblStatus);
 }
