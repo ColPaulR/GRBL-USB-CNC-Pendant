@@ -51,6 +51,20 @@ void loop()
     // TODO: Convert to readline and then parse GRBL status
     uint8_t c = GRBLSerial.read();
     collect(c);
+    Serial.printf("%x %c\n",c,c);
+  }
+
+  // Send periodic requests
+  static unsigned long last_mount_check = millis();
+  unsigned long now=millis();
+  if((now-last_mount_check)>500)
+  {
+    last_mount_check = millis();
+    // Serial.print("?\n");
+    GRBLSerial.write('?');
   }
 }
 
+void printtousb(char * cBuffer){
+  Serial.print(cBuffer);
+}

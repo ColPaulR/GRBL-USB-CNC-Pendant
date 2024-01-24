@@ -5,6 +5,8 @@
 
 #define MAX_STATUS_LEN 10
 
+extern void printtousb(char * cBuffer);
+
 struct GRBLSTATUS
 {
   char      cStatus[MAX_STATUS_LEN];
