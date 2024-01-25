@@ -6,6 +6,7 @@ This project is inspired and partly based on:
 - [Duet USB CNC Pendant](https://github.com/hurzhurz/Duet-USB-CNC-Pendant)
 - [**Duet CNC-Pendant-Firmware**](https://github.com/Duet3D/CNC-Pendant-Firmware)
 - [Adafruit TinyUSB HID Example](https://github.com/adafruit/Adafruit_TinyUSB_Arduino/tree/master/examples/DualRole/HID/hid_device_report)
+- [PendantsForFluidNC's GrblParserC library](https://github.com/bdring/PendantsForFluidNC)
 
 # !!!!!!  The remaining content is unchanged from Duet USB CNC Pendant !!!!!! 
 
