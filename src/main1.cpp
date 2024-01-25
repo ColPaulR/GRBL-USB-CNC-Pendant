@@ -36,6 +36,43 @@ tusb_desc_device_t desc_device;
 #define MAX_DEV 5
 struct USBHIDPendantDevice devices[MAX_DEV];
 
+// Recreate status message from structure passed
+void PrintGrblStatusMsg(struct GRBLSTATUS *GrblStatus)
+{
+  // Print message as received
+  //   Idle|MPos:151.000,149.000,-1.000|Pn:XP|FS:0,0|WCO:12.000,28.000,78.000
+  Serial.printf("<%s|", GrblStatus->cStatus);
+  if (GrblStatus->isMpos)
+    Serial.printf("MPos:%3.3f", GrblStatus->axis_Position[0]);
+  else
+    Serial.printf("WPos:%3.3f", GrblStatus->axis_Position[0]);
+  for (int i = 1; i < GrblStatus->nAxis; i++)
+    Serial.printf(",%3.3f", GrblStatus->axis_Position[i]);
+
+  Serial.printf("|FS:%d,%d", GrblStatus->feedrate, GrblStatus->spindle_speed);
+  Serial.printf("|WCO:%3.3f", GrblStatus->axis_WCO[0]);
+  switch (GrblStatus->spindle)
+  {
+  case 1:
+    Serial.print("|A:S");
+    break;
+  case 2:
+    Serial.print("|A:C");
+    break;
+  default:
+    Serial.print("|A:");
+    break;
+  }
+
+  if (GrblStatus->mist)
+    Serial.print("M");
+
+  if (GrblStatus->flood)
+    Serial.print("F");
+
+  Serial.print(">\r\n");
+}
+
 // the setup function runs once when you press reset or power the board
 
 // core1's setup
@@ -113,49 +150,29 @@ void loop1()
   // Create pointer to new structure and set to null address
   GRBLSTATUS *GrblStatus = 0;
   if (rp2040.fifo.available())
-  {
-    //   duetstatus = (DuetStatus*)rp2040.fifo.pop();
     GrblStatus = (GRBLSTATUS *)rp2040.fifo.pop();
 
-    // Print message as received
-    //   Idle|MPos:151.000,149.000,-1.000|Pn:XP|FS:0,0|WCO:12.000,28.000,78.000
-    Serial.printf("<%s|", GrblStatus->cStatus);
-    if (GrblStatus->isMpos)
-      Serial.printf("MPos:%3.3f", GrblStatus->axis_Position[0]);
-    else
-      Serial.printf("WPos:%3.3f", GrblStatus->axis_Position[0]);
-    for (int i = 1; i < GrblStatus->nAxis; i++)
-      Serial.printf(",%3.3f", GrblStatus->axis_Position[i]);
-
-    Serial.printf("|FS:%d,%d", GrblStatus->feedrate, GrblStatus->spindle_speed);
-    Serial.printf("|WCO:%3.3f", GrblStatus->axis_WCO[0]);
-    switch (GrblStatus->spindle)
-    {
-    case 1:
-      Serial.print("|A:S");
-      break;
-    case 2:
-      Serial.print("|A:C");
-      break;
-    default:
-      break;
-    }
-    Serial.print(">\r\n");
-  }
-  // loop through devices, forward Duet status messages and call loop function
-  for (uint8_t i = 0; i < MAX_DEV; i++)
+  if (GrblStatus)
   {
-    if (devices[i].object)
-    {
-      if (GrblStatus)
-        devices[i].object->grblstatus_received(GrblStatus);
-      devices[i].object->loop();
-    }
-  }
 
-  // delete duetstatus;
-  // Cleanup
-  delete GrblStatus;
+    // Print message as received
+    PrintGrblStatusMsg(GrblStatus);
+
+    // loop through devices, forward Duet status messages and call loop function
+    for (uint8_t i = 0; i < MAX_DEV; i++)
+    {
+      if (devices[i].object)
+      {
+        if (GrblStatus)
+          devices[i].object->grblstatus_received(GrblStatus);
+        devices[i].object->loop();
+      }
+    }
+
+    // delete duetstatus;
+    // Cleanup
+    delete GrblStatus;
+  }
 }
 
 // Invoked when device with hid interface is mounted
