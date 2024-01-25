@@ -59,7 +59,7 @@ void loop()
   if((now-last_mount_check)>GRBL_QUERY_INTERVAL)
   {
     last_mount_check = millis();
-    // Serial.print("?\n");
+    // Query status
     GRBLSerial.write('?');
   }
 }

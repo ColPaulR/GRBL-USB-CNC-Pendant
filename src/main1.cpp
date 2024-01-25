@@ -4,7 +4,6 @@
 #include "Pendant_WHB04B6.h"
 #include "GrblCode.h"
 
-
 // Example used as base for USB HID stuff:
 // https://github.com/adafruit/Adafruit_TinyUSB_Arduino/tree/master/examples/DualRole/HID/hid_device_report
 
@@ -19,14 +18,13 @@
  any redistribution
 *********************************************************************/
 
-
 // pio-usb is required for rp2040 host
 #include "pio_usb.h"
-#define HOST_PIN_DP   16   // GPIO Pin used as D+ for host, D- = D+ + 1
+#define HOST_PIN_DP 16 // GPIO Pin used as D+ for host, D- = D+ + 1
 
 #include "Adafruit_TinyUSB.h"
 
-#define LANGUAGE_ID 0x0409  // English
+#define LANGUAGE_ID 0x0409 // English
 
 // USB Host object
 Adafruit_USBH_Host USBHost;
@@ -41,24 +39,28 @@ struct USBHIDPendantDevice devices[MAX_DEV];
 // the setup function runs once when you press reset or power the board
 
 // core1's setup
-void setup1() {
-  //while ( !Serial ) delay(10);   // wait for native usb
+void setup1()
+{
+  // while ( !Serial ) delay(10);   // wait for native usb
   Serial.println("Core1 setup to run TinyUSB host with pio-usb");
 
   // Check for CPU frequency, must be multiple of 120Mhz for bit-banging USB
   uint32_t cpu_hz = clock_get_hz(clk_sys);
-  if ( cpu_hz != 120000000UL && cpu_hz != 240000000UL ) {
-    while ( !Serial ) delay(10);   // wait for native usb
+  if (cpu_hz != 120000000UL && cpu_hz != 240000000UL)
+  {
+    while (!Serial)
+      delay(10); // wait for native usb
     Serial.printf("Error: CPU Clock = %u, PIO USB require CPU clock must be multiple of 120 Mhz\r\n", cpu_hz);
     Serial.printf("Change your CPU Clock to either 120 or 240 Mhz in Menu->CPU Speed \r\n", cpu_hz);
-    while(1) delay(1);
+    while (1)
+      delay(1);
   }
 
   pio_usb_configuration_t pio_cfg = PIO_USB_DEFAULT_CONFIG;
   pio_cfg.pin_dp = HOST_PIN_DP;
   USBHost.configure_pio_usb(1, &pio_cfg);
-  
-  for(uint8_t i = 0 ; i < MAX_DEV ; i++)
+
+  for (uint8_t i = 0; i < MAX_DEV; i++)
   {
     devices[i].dev_addr = 0;
     devices[i].instance = 0;
@@ -79,9 +81,9 @@ void setup1() {
 
 void check_devices_still_mounted()
 {
-  for(uint8_t i = 0; i< MAX_DEV; i++)
+  for (uint8_t i = 0; i < MAX_DEV; i++)
   {
-    if(devices[i].object)
+    if (devices[i].object)
     {
       if (!tuh_hid_mounted(devices[i].dev_addr, devices[i].instance))
       {
@@ -99,8 +101,8 @@ void loop1()
   USBHost.task();
 
   static unsigned long last_mount_check = millis();
-  unsigned long now=millis();
-  if((now-last_mount_check)>MOUNT_CHECK_INTERVAL)
+  unsigned long now = millis();
+  if ((now - last_mount_check) > MOUNT_CHECK_INTERVAL)
   {
     last_mount_check = millis();
     check_devices_still_mounted();
@@ -109,16 +111,43 @@ void loop1()
   // check for new Duet status messages from Serial routines on other core
   // DuetStatus * duetstatus = 0;
   // Create pointer to new structure and set to null address
-  GRBLSTATUS * GrblStatus = 0;
-  if(rp2040.fifo.available())
-  //   duetstatus = (DuetStatus*)rp2040.fifo.pop();
-    GrblStatus = (GRBLSTATUS*)rp2040.fifo.pop();
-  // loop through devices, forward Duet status messages and call loop function
-  for(uint8_t i = 0; i< MAX_DEV; i++)
+  GRBLSTATUS *GrblStatus = 0;
+  if (rp2040.fifo.available())
   {
-    if(devices[i].object)
+    //   duetstatus = (DuetStatus*)rp2040.fifo.pop();
+    GrblStatus = (GRBLSTATUS *)rp2040.fifo.pop();
+
+    // Print message as received
+    //   Idle|MPos:151.000,149.000,-1.000|Pn:XP|FS:0,0|WCO:12.000,28.000,78.000
+    Serial.printf("<%s|", GrblStatus->cStatus);
+    if (GrblStatus->isMpos)
+      Serial.printf("MPos:%3.3f", GrblStatus->axis_Position[0]);
+    else
+      Serial.printf("WPos:%3.3f", GrblStatus->axis_Position[0]);
+    for (int i = 1; i < GrblStatus->nAxis; i++)
+      Serial.printf(",%3.3f", GrblStatus->axis_Position[i]);
+
+    Serial.printf("|FS:%d,%d", GrblStatus->feedrate, GrblStatus->spindle_speed);
+    Serial.printf("|WCO:%3.3f", GrblStatus->axis_WCO[0]);
+    switch (GrblStatus->spindle)
     {
-      if(GrblStatus)
+    case 1:
+      Serial.print("|A:S");
+      break;
+    case 2:
+      Serial.print("|A:C");
+      break;
+    default:
+      break;
+    }
+    Serial.print(">\r\n");
+  }
+  // loop through devices, forward Duet status messages and call loop function
+  for (uint8_t i = 0; i < MAX_DEV; i++)
+  {
+    if (devices[i].object)
+    {
+      if (GrblStatus)
         devices[i].object->grblstatus_received(GrblStatus);
       devices[i].object->loop();
     }
@@ -134,15 +163,16 @@ void loop1()
 // tuh_hid_parse_report_descriptor() can be used to parse common/simple enough
 // descriptor. Note: if report descriptor length > CFG_TUH_ENUMERATION_BUFSIZE,
 // it will be skipped therefore report_desc = NULL, desc_len = 0
-void tuh_hid_mount_cb(uint8_t dev_addr, uint8_t instance, uint8_t const *desc_report, uint16_t desc_len) {
+void tuh_hid_mount_cb(uint8_t dev_addr, uint8_t instance, uint8_t const *desc_report, uint16_t desc_len)
+{
   (void)desc_report;
   (void)desc_len;
   uint16_t vid, pid;
 
   // check if already mounted, immitate unmount first if it is
-  for(uint8_t i = 0 ; i < MAX_DEV ; i++)
+  for (uint8_t i = 0; i < MAX_DEV; i++)
   {
-    if(devices[i].dev_addr == dev_addr && devices[i].instance == instance && devices[i].object)
+    if (devices[i].dev_addr == dev_addr && devices[i].instance == instance && devices[i].object)
     {
       Serial.printf("HID device address = %d, instance = %d was already mounted, treat as unmounted first\r\n", dev_addr, instance);
       delete devices[i].object;
@@ -154,30 +184,31 @@ void tuh_hid_mount_cb(uint8_t dev_addr, uint8_t instance, uint8_t const *desc_re
 
   Serial.printf("HID device address = %d, instance = %d is mounted\r\n", dev_addr, instance);
   Serial.printf("VID = %04x, PID = %04x\r\n", vid, pid);
-  if (!tuh_hid_receive_report(dev_addr, instance)) {
+  if (!tuh_hid_receive_report(dev_addr, instance))
+  {
     Serial.printf("Error: cannot request to receive report\r\n");
     return;
   }
   // Interface protocol (hid_interface_protocol_enum_t)
-  const char* protocol_str[] = { "None", "Keyboard", "Mouse" };
+  const char *protocol_str[] = {"None", "Keyboard", "Mouse"};
   uint8_t const itf_protocol = tuh_hid_interface_protocol(dev_addr, instance);
   Serial.printf("HID Interface Protocol = %s(%d)\r\n", protocol_str[itf_protocol], itf_protocol);
 
   // loop though device object slots
-  for(uint8_t i = 0 ; i < MAX_DEV ; i++)
+  for (uint8_t i = 0; i < MAX_DEV; i++)
   {
     // search a free slot
-    if(!devices[i].object)
+    if (!devices[i].object)
     {
       // prepare slot
       devices[i].dev_addr = dev_addr;
       devices[i].instance = instance;
-      USBHIDPendant * object = 0;
+      USBHIDPendant *object = 0;
       // check if known device type and create matching object
       //
       // // WHB04B-6 Wireless CNC Pendant
       // https://github.com/LinuxCNC/linuxcnc/tree/master/src/hal/user_comps/xhc-whb04b-6
-      if(itf_protocol == HID_ITF_PROTOCOL_NONE && vid == 0x10ce && pid == 0xeb93)
+      if (itf_protocol == HID_ITF_PROTOCOL_NONE && vid == 0x10ce && pid == 0xeb93)
       {
         Serial.printf("Found new WHB04B-6 device\r\n");
         object = new Pendant_WHB04B6(dev_addr, instance);
@@ -186,17 +217,17 @@ void tuh_hid_mount_cb(uint8_t dev_addr, uint8_t instance, uint8_t const *desc_re
       break;
     }
   }
-
 }
 
 // Invoked when device with hid interface is un-mounted
-void tuh_hid_umount_cb(uint8_t dev_addr, uint8_t instance) {
+void tuh_hid_umount_cb(uint8_t dev_addr, uint8_t instance)
+{
   Serial.printf("HID device address = %d, instance = %d is unmounted\r\n", dev_addr, instance);
 
   // check if object exists for device and destroy it
-  for(uint8_t i = 0 ; i < MAX_DEV ; i++)
+  for (uint8_t i = 0; i < MAX_DEV; i++)
   {
-    if(devices[i].dev_addr == dev_addr && devices[i].instance == instance && devices[i].object)
+    if (devices[i].dev_addr == dev_addr && devices[i].instance == instance && devices[i].object)
     {
       delete devices[i].object;
       devices[i].object = 0;
@@ -205,21 +236,24 @@ void tuh_hid_umount_cb(uint8_t dev_addr, uint8_t instance) {
 }
 
 // Invoked when received report from device via interrupt endpoint
-void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance, uint8_t const *report, uint16_t len) {
+void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance, uint8_t const *report, uint16_t len)
+{
   Serial.printf("HIDreport from device address = %d, instance = %d : ", dev_addr, instance);
-  for (uint16_t i = 0; i < len; i++) {
+  for (uint16_t i = 0; i < len; i++)
+  {
     Serial.printf("0x%02X ", report[i]);
   }
   Serial.println();
   // continue to request to receive report
-  if (!tuh_hid_receive_report(dev_addr, instance)) {
+  if (!tuh_hid_receive_report(dev_addr, instance))
+  {
     Serial.printf("Error: cannot request to receive report\r\n");
   }
 
   // check if object exists for device and pass report
-  for(uint8_t i = 0 ; i < MAX_DEV ; i++)
+  for (uint8_t i = 0; i < MAX_DEV; i++)
   {
-    if(devices[i].dev_addr == dev_addr && devices[i].instance == instance && devices[i].object)
+    if (devices[i].dev_addr == dev_addr && devices[i].instance == instance && devices[i].object)
     {
       devices[i].object->report_received(report, len);
     }

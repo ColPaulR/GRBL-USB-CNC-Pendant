@@ -16,6 +16,8 @@ struct GRBLSTATUS
   double    axis_WCO[MAX_N_AXIS];
   int       spindle;
   uint32_t  spindle_speed;
+  bool      flood;
+  bool      mist;
   uint32_t  feedrate;
 };
 
