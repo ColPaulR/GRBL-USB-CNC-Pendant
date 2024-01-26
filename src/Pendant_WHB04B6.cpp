@@ -158,7 +158,7 @@ void Pendant_WHB04B6::send_display_report()
     this->last_display_report = millis();
 
     // Debug help
-    Serial.printf("X:%f,Y:%f,Z%f,A%f\r\n",this->axis_coordinates[0],this->axis_coordinates[1],this->axis_coordinates[2],this->axis_coordinates[3]);
+    // Serial.printf("X:%f,Y:%f,Z%f,A%f\r\n",this->axis_coordinates[0],this->axis_coordinates[1],this->axis_coordinates[2],this->axis_coordinates[3]);
 
     // update axis coordinates in display report data
     this->double_to_report_bytes(axis_coordinates[0 + this->display_axis_offset], 4, 5, 6, 7);
