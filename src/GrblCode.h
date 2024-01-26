@@ -5,7 +5,9 @@
 
 #define MAX_STATUS_LEN 10
 
-extern void printtousb(char * cBuffer);
+// extern void printtousb(char * cBuffer);
+
+void PrintGrblStatusMsg(struct GRBLSTATUS *GrblStatus);
 
 struct GRBLSTATUS
 {

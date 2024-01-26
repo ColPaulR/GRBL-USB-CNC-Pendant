@@ -53,37 +53,37 @@ void show_spindle_coolant(int spindle, bool flood, bool mist)
 void end_status_report()
 {
     // Send a newly allocated structure that is initialize with current status
-    rp2040.fifo.push_nb((uint32_t)new(GrblStatus));
+    rp2040.fifo.push_nb((uint32_t)new GRBLSTATUS(GrblStatus));
 }
 
 // [GC: messages
 void show_gcode_modes(struct gcode_modes* modes) {
     // update GrblStatus with new modes
-
+   
     // Spindle values
-    if (strcmp(modes->spindle),"Off")
+    if (!strcmp((modes->spindle),"Off"))
         GrblStatus.spindle = 0;
-    if (strcmp(modes->spindle),"CW")
+    if (!strcmp((modes->spindle),"CW"))
         GrblStatus.spindle = 1;
-    if (strcmp(modes->spindle),"CCW")
+    if (!strcmp((modes->spindle),"CCW"))
         GrblStatus.spindle = 2;
 
     // Coolant values
-    if (strcmp(modes->coolant),"Off")
+    if (!strcmp(modes->coolant,"Off"))
     {
         GrblStatus.mist = 0;
         GrblStatus.flood = 0;
     }
-    if (strcmp(modes->coolant),"Mist")
+    if (!strcmp(modes->coolant,"Mist"))
     {
         GrblStatus.mist = 1;
     }
-    if (strcmp(modes->coolant),"Flood")
+    if (!strcmp(modes->coolant,"Flood"))
     {
         GrblStatus.flood = 1;
     }
 
     // Send a newly allocated structure that is initialize with current status
-    rp2040.fifo.push_nb((uint32_t)new(GrblStatus));
+    rp2040.fifo.push_nb((uint32_t)new GRBLSTATUS(GrblStatus));
 }
 

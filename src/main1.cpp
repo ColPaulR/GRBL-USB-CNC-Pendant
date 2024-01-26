@@ -40,7 +40,11 @@ struct USBHIDPendantDevice devices[MAX_DEV];
 void PrintGrblStatusMsg(struct GRBLSTATUS *GrblStatus)
 {
   // Print message as received
+  // Serial.printf("Received: <%s|", GrblStatus->cStatus);
+  //
+  // Example:
   //   Idle|MPos:151.000,149.000,-1.000|Pn:XP|FS:0,0|WCO:12.000,28.000,78.000
+
   Serial.printf("<%s|", GrblStatus->cStatus);
   if (GrblStatus->isMpos)
     Serial.printf("MPos:%3.3f", GrblStatus->axis_Position[0]);
@@ -156,7 +160,7 @@ void loop1()
   {
 
     // Print message as received
-    PrintGrblStatusMsg(GrblStatus);
+    // PrintGrblStatusMsg(GrblStatus);
 
     // loop through devices, forward Duet status messages and call loop function
     for (uint8_t i = 0; i < MAX_DEV; i++)
@@ -255,13 +259,15 @@ void tuh_hid_umount_cb(uint8_t dev_addr, uint8_t instance)
 // Invoked when received report from device via interrupt endpoint
 void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance, uint8_t const *report, uint16_t len)
 {
-  Serial.printf("HIDreport from device address = %d, instance = %d : ", dev_addr, instance);
-  for (uint16_t i = 0; i < len; i++)
+  if (false)
   {
-    Serial.printf("0x%02X ", report[i]);
-  }
-  Serial.println();
-  // continue to request to receive report
+    Serial.printf("HIDreport from device address = %d, instance = %d : ", dev_addr, instance);
+    for (uint16_t i = 0; i < len; i++)
+    {
+      Serial.printf("0x%02X ", report[i]);
+    }
+    Serial.println();
+  } // continue to request to receive report
   if (!tuh_hid_receive_report(dev_addr, instance))
   {
     Serial.printf("Error: cannot request to receive report\r\n");

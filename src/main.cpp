@@ -50,6 +50,7 @@ void loop()
     // TODO: Convert to readline and then parse GRBL status
     uint8_t c = GRBLSerial.read();
     collect(c);
+    // Serial.write(c);xx
     // Serial.printf("%x %c\n",c,c);
   }
 
@@ -64,6 +65,6 @@ void loop()
   }
 }
 
-void printtousb(char * cBuffer){
-  Serial.print(cBuffer);
-}
+// void printtousb(char * cBuffer){
+//   Serial.print(cBuffer);
+// }

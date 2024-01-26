@@ -157,6 +157,9 @@ void Pendant_WHB04B6::send_display_report()
 {
     this->last_display_report = millis();
 
+    // Debug help
+    Serial.printf("X:%f,Y:%f,Z%f,A%f\r\n",this->axis_coordinates[0],this->axis_coordinates[1],this->axis_coordinates[2],this->axis_coordinates[3]);
+
     // update axis coordinates in display report data
     this->double_to_report_bytes(axis_coordinates[0 + this->display_axis_offset], 4, 5, 6, 7);
     this->double_to_report_bytes(axis_coordinates[1 + this->display_axis_offset], 8, 9, 10, 11);
@@ -167,6 +170,7 @@ void Pendant_WHB04B6::send_display_report()
 
     // send display report data to device
     this->set_report(0x06, HID_REPORT_TYPE_FEATURE, &this->display_report_data, 24);
+    // Serial.print("LCD screen written\n");
 }
 
 void Pendant_WHB04B6::loop()
@@ -258,7 +262,8 @@ void Pendant_WHB04B6::on_key_release(uint8_t keycode)
 
 void Pendant_WHB04B6::grblstatus_received(GRBLSTATUS *grblstatus)
 {
-    for (uint8_t i = 0; i < 6; i++)
+    // Serial.printf("X:%f,Y:%f,Z%f,A%f\n",grblstatus->axis_Position[0],grblstatus->axis_Position[1],grblstatus->axis_Position[2],grblstatus->axis_Position[3]);
+    for (uint8_t i = 0; i < (grblstatus->nAxis); i++)
         this->axis_coordinates[i] = grblstatus->axis_Position[i];
 
     this->uint16_to_report_bytes(grblstatus->spindle_speed, 18, 19);
