@@ -13,7 +13,7 @@
 #define CMD_CONTINUOUS_UPDATE_INTERVAL 500
 #define SEED 0xff
 
-#define R_IDX(x) (x+1+(x/7)) // helper to accommodate report package header for relative offset
+#define R_IDX(x) (x + 1 + (x / 7)) // helper to accommodate report package header for relative offset
 
 #define KEYCODE_RESET 0x01
 #define KEYCODE_STOP 0x02
@@ -48,20 +48,21 @@
 #define FEEDSELECTOR_100P 0x1B
 #define FEEDSELECTOR_LEAD1 0x9B
 #define FEEDSELECTOR_LEAD2 0x1C
-#define FEEDSELECTOR_STEP_STEPS 4
+#define FEEDSELECTOR_STEP_STEPS 6
 #define FEEDSELECTOR_CONT_STEPS 6
 
-#define FEEDSELECTOR_TO_LINEAR(x) ((x>=FEEDSELECTOR_2P_0001 && x<=FEEDSELECTOR_30P_1)?(x-FEEDSELECTOR_2P_0001+1):((x>=FEEDSELECTOR_60P&&x<=FEEDSELECTOR_100P)?(x-FEEDSELECTOR_60P+5):0))
-#define FEEDSELECTOR_IS_LEAD(x) (x==FEEDSELECTOR_LEAD1 || x==FEEDSELECTOR_LEAD2)
+#define FEEDSELECTOR_TO_LINEAR(x) ((x >= FEEDSELECTOR_2P_0001 && x <= FEEDSELECTOR_30P_1) ? (x - FEEDSELECTOR_2P_0001 + 1) : ((x >= FEEDSELECTOR_60P && x <= FEEDSELECTOR_100P) ? (x - FEEDSELECTOR_60P + 5) : 0))
+#define FEEDSELECTOR_IS_LEAD(x) (x == FEEDSELECTOR_LEAD1 || x == FEEDSELECTOR_LEAD2)
 
-class Pendant_WHB04B6: public USBHIDPendant
+class Pendant_WHB04B6 : public USBHIDPendant
 {
 public:
   Pendant_WHB04B6(uint8_t dev_addr, uint8_t instance);
   ~Pendant_WHB04B6();
   void report_received(uint8_t const *report, uint16_t len) override;
-  void grblstatus_received(GRBLSTATUS * grblstatus) override;
+  void grblstatus_received(GRBLSTATUS *grblstatus) override;
   void loop() override;
+
 private:
   void send_display_report();
   void double_to_report_bytes(double val, uint8_t idx_intval_lower, uint8_t idx_intval_upper, uint8_t idx_frac_lower, uint8_t idx_frac_upper);
@@ -71,6 +72,7 @@ private:
   uint8_t selected_axis, display_axis_offset, selected_feed;
   unsigned long last_display_report;
   int16_t jog;
+  unsigned machine_coordinates;
   void on_key_press(uint8_t keycode) override;
   void on_key_release(uint8_t keycode) override;
   void handle_continuous_check();
@@ -87,39 +89,30 @@ private:
   } mode = Mode::Continuous;
 };
 
-const uint16_t WHB04B6ContinuousFeeds[] = {6000, 6000, 600, 6000, 6000, 6000};
-const float WHB04B6StepSizes[] = {0.001, 0.01, 0.1, 1.0};
+const uint16_t WHB04B6ContinuousFeeds[] = {6000, 6000, 6000, 6000, 6000, 6000};
+const float WHB04B6StepSizes[] = {0.001, 0.01, 0.1, 1.0, 10, 100};
 const float WHB04B6ContinuousMultipliers[] = {0.02, 0.05, 0.10, 0.30, 0.60, 1.00};
-const char WHB04B6AxisLetters[] = {'X','Y','Z','U','V','W'};
+const char WHB04B6AxisLetters[] = {'X', 'Y', 'Z', 'A', 'B', 'C'};
 const uint8_t WHB04B6AxisCount = 6;
-
-const char* const WHB04B6MoveCommands[] =
-{
-  "G91 G0 F%u X%.3f",     // X axis
-  "G91 G0 F%u Y%.3f",     // Y axis
-  "G91 G0 F%u Z%.3f",     // Z axis
-  "G91 G0 F%u U%.3f",     // axis 4
-  "G91 G0 F%u V%.3f",     // axis 5
-  "G91 G0 F%u W%.3f"      // axis 6
-};
+const char WHB04B6JogCommands[] = "$J=G91";
 
 const uint16_t WHB04B6FeedRateMax[] =
-{
-  10000,     // X axis
-  10000,     // Y axis
-  1000,      // Z axis
-  10000,     // axis 4
-  10000,     // axis 5
-  10000      // axis 6
+    {
+        10000, // X axis
+        10000, // Y axis
+        1000,  // Z axis
+        10000, // axis 4
+        10000, // axis 5
+        10000  // axis 6
 };
 const uint16_t WHB04B6FeedRateStep[] =
-{
-  500,     // X axis
-  500,     // Y axis
-  50,      // Z axis
-  500,     // axis 4
-  500,     // axis 5
-  500      // axis 6
+    {
+        500, // X axis
+        500, // Y axis
+        50,  // Z axis
+        500, // axis 4
+        500, // axis 5
+        500  // axis 6
 };
 
 // const char* const WHB04B6ButtonCommands[] =
@@ -142,24 +135,24 @@ const uint16_t WHB04B6FeedRateStep[] =
 //   ""           // Button M10
 // };
 
-const char* const WHB04B6ButtonCommandsFN[] =
-{
-  "$BYE", // Button RESET
-  "!", // Button STOP
-  "~", // Button STARTPAUSE
-  "", // Button M1_FEEDPLUS
-  "", // Button M2_FEEDMINUS
-  "M98 P\"WHB04B6/spindle-plus.g\"", // Button M3_SPINDLEPLUS
-  "M98 P\"WHB04B6/spindle-minus.g\"", // Button M4_SPINDLEMINUS
-  "$H", // Button M5_MHOME
-  "", // Button M6_SAFEZ
-  "G92X0Y0",            // Button M7_WHOME
-  "M98 P\"WHB04B6/spindle-onoff.g\"", // Button M8_SPINDLEONOFF
-  "", // Button FN
-  "M98 P\"WHB04B6/probe-z.g\"", // Button M9_PROBEZ
-  "", // Button CONTINUOUS
-  "", // Button STEP
-  "", // Button M10
+const char *const WHB04B6ButtonCommandsFN[] =
+    {
+        "$BYE",                             // Button RESET
+        "!",                                // Button STOP
+        "~",                                // Button STARTPAUSE
+        "",                                 // Button M1_FEEDPLUS
+        "",                                 // Button M2_FEEDMINUS
+        "M98 P\"WHB04B6/spindle-plus.g\"",  // Button M3_SPINDLEPLUS
+        "M98 P\"WHB04B6/spindle-minus.g\"", // Button M4_SPINDLEMINUS
+        "$H",                               // Button M5_MHOME
+        "",                                 // Button M6_SAFEZ
+        "G92X0Y0",                          // Button M7_WHOME
+        "M98 P\"WHB04B6/spindle-onoff.g\"", // Button M8_SPINDLEONOFF
+        "",                                 // Button FN
+        "M98 P\"WHB04B6/probe-z.g\"",       // Button M9_PROBEZ
+        "",                                 // Button CONTINUOUS
+        "",                                 // Button STEP
+        "",                                 // Button M10
 };
 const char WHB04B6ContinuousRunCommand[] = "M98 P\"pendant-continuous-run.g\" A\"%c\" F%u D%u";
 const char WHB04B6ContinuousStopCommand[] = "M98 P\"pendant-continuous-stop.g\"";

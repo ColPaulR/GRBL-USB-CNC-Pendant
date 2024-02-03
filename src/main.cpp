@@ -36,22 +36,22 @@ void loop()
   while (rp2040.fifo.available())
   {
     String *cmd;
+
     cmd = (String *)rp2040.fifo.pop();
+    // Echo to debug port
+    Serial.println(*cmd);
     // send to GRBL Host
     GRBLSerial.print(*cmd);
-    // Echo to debug port
-    Serial.print(*cmd);
+
+    // Cleanup memory
     delete cmd;
   }
 
-  // read serial from Duet, forward to PanelDue and buffer/read JSON status data
+  // read serial from GRBL
   while (GRBLSerial.available())
   {
-    // TODO: Convert to readline and then parse GRBL status
     uint8_t c = GRBLSerial.read();
     collect(c);
-    // Serial.write(c);
-    // Serial.printf("%x %c\n",c,c);
   }
 
   // Send periodic requests
