@@ -15,7 +15,8 @@ struct GRBLSTATUS
   int       isMpos;
   int       nAxis;
   double    axis_Position[MAX_N_AXIS];
-  double    axis_WCO[MAX_N_AXIS];
+  // ignore axis_WCO for now as it is not currently used
+  // double    axis_WCO[MAX_N_AXIS];
   int       spindle;
   uint32_t  spindle_speed;
   bool      flood;

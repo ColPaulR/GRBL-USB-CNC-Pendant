@@ -54,7 +54,7 @@ void PrintGrblStatusMsg(struct GRBLSTATUS *GrblStatus)
     Serial.printf(",%3.3f", GrblStatus->axis_Position[i]);
 
   Serial.printf("|FS:%d,%d", GrblStatus->feedrate, GrblStatus->spindle_speed);
-  Serial.printf("|WCO:%3.3f", GrblStatus->axis_WCO[0]);
+  // Serial.printf("|WCO:%3.3f", GrblStatus->axis_WCO[0]);
   switch (GrblStatus->spindle)
   {
   case 1:

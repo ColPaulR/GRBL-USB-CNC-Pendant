@@ -155,5 +155,5 @@ const char *const WHB04B6ButtonCommandsFN[] =
         "",                                 // Button M10
 };
 const char WHB04B6ContinuousRunCommand[] = "M98 P\"pendant-continuous-run.g\" A\"%c\" F%u D%u";
-const char WHB04B6ContinuousStopCommand[] = "M98 P\"pendant-continuous-stop.g\"";
+const char WHB04B6ContinuousStopCommand[] = "\x85";
 #endif

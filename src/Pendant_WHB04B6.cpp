@@ -26,12 +26,12 @@ void vPauseRunButton()
 
 void vFeedPlus()
 {
-    mySend_command("\0x91");
+    mySend_command("\x91");
 }
 
 void vFeedMinus()
 {
-    mySend_command("\0x92");
+    mySend_command("\x92");
 }
 
 void (*(WHB04B6BtnFx[]))() =
