@@ -82,6 +82,7 @@ private:
   bool continuous_direction;
   unsigned long last_continuous_check;
   unsigned long last_continuous_update;
+  uint8_t state;
   enum class Mode : uint8_t
   {
     Step = 0,

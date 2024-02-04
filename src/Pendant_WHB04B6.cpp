@@ -188,7 +188,19 @@ void Pendant_WHB04B6::on_key_press(uint8_t keycode)
         break;
     case KEYCODE_STARTPAUSE:
         // Insert pause/start logic here
-        this->send_command(new String("~"));
+        switch (this->state)
+        {
+        case State::Hold:
+            // Resume
+            this->send_command(new String("~"));
+            break;
+        case State::Alarm:
+            // clear alarm
+            this->send_command(new String("$x"));
+            break;
+        default:
+            Serial.printf("Pause/run in GRBL State: %d not defined\r\n", this->state);
+        }
         break;
     case KEYCODE_M1_FEEDPLUS:
         this->send_command(new String("\x91"));
@@ -232,7 +244,13 @@ void Pendant_WHB04B6::grblstatus_received(GRBLSTATUS *grblstatus)
     else
         this->machine_coordinates = false;
 
+    // Save state enumeration
+    this->state = grblstatus->State;
+
     this->send_display_report();
+
+   
+
 }
 
 void Pendant_WHB04B6::handle_continuous_check()

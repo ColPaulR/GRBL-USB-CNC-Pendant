@@ -9,8 +9,22 @@ GRBLSTATUS GrblStatus;
 // void  show_limits(bool probe, const bool* limits, size_t n_axis) {};
 void show_state(const char *state)
 {
-    // Update current GRBL status with new state
-    strcpy(GrblStatus.cStatus, state);
+     // Parse GRBL state; set to undefined by default
+     GrblStatus.State=State::Undefined;
+
+    if (strcmp(state,"IDLE") == 0)
+        GrblStatus.State=State::Idle;
+
+    if (strcmp(state,"HOLD")== 0)
+        GrblStatus.State=State::Hold;
+
+    if (strcmp(state,"JOG")== 0)
+        GrblStatus.State=State::Jog;
+
+    if (GrblStatus.State == State::Undefined)
+        Serial.print("Grbl State ");
+        Serial.print(state);
+        Serial.println(" not handled");
 };
 
 void show_dro(const pos_t *axes, const pos_t *wcos, bool isMpos, bool *limits, size_t n_axis)

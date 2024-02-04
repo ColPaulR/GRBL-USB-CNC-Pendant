@@ -37,7 +37,7 @@ tusb_desc_device_t desc_device;
 struct USBHIDPendantDevice devices[MAX_DEV];
 
 // Recreate status message from structure passed
-void PrintGrblStatusMsg(struct GRBLSTATUS *GrblStatus)
+/*void PrintGrblStatusMsg(struct GRBLSTATUS *GrblStatus)
 {
   // Print message as received
   // Serial.printf("Received: <%s|", GrblStatus->cStatus);
@@ -76,6 +76,7 @@ void PrintGrblStatusMsg(struct GRBLSTATUS *GrblStatus)
 
   Serial.print(">\r\n");
 }
+*/
 
 // the setup function runs once when you press reset or power the board
 
