@@ -78,6 +78,8 @@ private:
   void handle_continuous_check();
   void handle_continuous_update();
   void stop_continuous();
+  void StartPauseButton();
+
   uint8_t continuous_axis = 0;
   bool continuous_direction;
   unsigned long last_continuous_check;

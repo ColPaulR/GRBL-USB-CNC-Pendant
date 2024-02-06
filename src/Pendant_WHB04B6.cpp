@@ -184,23 +184,11 @@ void Pendant_WHB04B6::on_key_press(uint8_t keycode)
         this->send_command(new String("$Bye"));
         break;
     case KEYCODE_STOP:
+        // hold
         this->send_command(new String("!"));
         break;
     case KEYCODE_STARTPAUSE:
-        // Insert pause/start logic here
-        switch (this->state)
-        {
-        case State::Hold:
-            // Resume
-            this->send_command(new String("~"));
-            break;
-        case State::Alarm:
-            // clear alarm
-            this->send_command(new String("$x"));
-            break;
-        default:
-            Serial.printf("Pause/run in GRBL State: %d not defined\r\n", this->state);
-        }
+        StartPauseButton();
         break;
     case KEYCODE_M1_FEEDPLUS:
         this->send_command(new String("\x91"));
@@ -248,9 +236,6 @@ void Pendant_WHB04B6::grblstatus_received(GRBLSTATUS *grblstatus)
     this->state = grblstatus->State;
 
     this->send_display_report();
-
-   
-
 }
 
 void Pendant_WHB04B6::handle_continuous_check()
@@ -290,5 +275,28 @@ void Pendant_WHB04B6::stop_continuous()
     {
         this->send_command(new String(WHB04B6ContinuousStopCommand));
         this->continuous_axis = 0;
+    }
+}
+
+void Pendant_WHB04B6::StartPauseButton()
+{
+    // Insert pause/start logic here
+    switch (this->state)
+    {
+    case State::Cycle:
+        // Hold
+        this->send_command(new String("!"));
+        break;
+
+    case State::Hold:
+        // Resume
+        this->send_command(new String("~"));
+        break;
+    case State::Alarm:
+        // clear alarm
+        this->send_command(new String("$x"));
+        break;
+    default:
+        Serial.printf("Pause/run in GRBL State: %d not defined\r\n", this->state);
     }
 }
