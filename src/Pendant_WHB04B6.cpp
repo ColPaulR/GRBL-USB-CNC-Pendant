@@ -283,11 +283,13 @@ void Pendant_WHB04B6::StartPauseButton()
     // Insert pause/start logic here
     switch (this->state)
     {
+    case State::Run:
     case State::Cycle:
+    case State::Jog:
+    case State::Homing:
         // Hold
         this->send_command(new String("!"));
         break;
-
     case State::Hold:
         // Resume
         this->send_command(new String("~"));
