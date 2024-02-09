@@ -191,13 +191,17 @@ void tuh_hid_mount_cb(uint8_t dev_addr, uint8_t instance, uint8_t const *desc_re
   (void)desc_len;
   uint16_t vid, pid;
 
-  for (uint8_t i = 0; i < desc_len; i++)
+  if (desc_len)
   {
-    if ((i % 8) == 0)
-      Serial.println();
-    Serial.print((char) *desc_report, HEX);
-    Serial.write(" ");
-    desc_report++;
+    for (uint8_t i = 0; i < desc_len; i++)
+    {
+      if ((i % 8) == 0)
+        Serial.println();
+      Serial.print((char)*desc_report, HEX);
+      Serial.write(" ");
+      desc_report++;
+    }
+    Serial.println();
   }
 
   // check if already mounted, immitate unmount first if it is
