@@ -9,13 +9,15 @@ GRBLSTATUS GrblStatus;
 // void  show_limits(bool probe, const bool* limits, size_t n_axis) {};
 void show_state(const char *state)
 {
-
+    // From FluidNC/FluidNC/src/Report.cpp, possible string states are"
+    //    "Idle", "Run" , "Jog", "Home", " Alarm", "Check", "Door:x", "Sleep"
+    
     // Parse GRBL state; set to undefined by default
     GrblStatus.State = State::Undefined;
 
     if (strncmp(state, "Run", 3) == 0)
     {
-        GrblStatus.State = State::Run;
+        GrblStatus.State = State::Cycle;
         return;
     }
 
