@@ -196,6 +196,25 @@ void Pendant_WHB04B6::on_key_press(uint8_t keycode)
     case KEYCODE_M2_FEEDMINUS:
         this->send_command(new String("\x92"));
         break;
+    case KEYCODE_M3_SPINDLEPLUS:
+        this->send_command(new String("\x9A"));
+        break;
+    case KEYCODE_M4_SPINDLEMINUS:
+        this->send_command(new String("\x9B"));
+        break;
+    case KEYCODE_M5_MHOME:
+      // Execute homing here or go to machine home?
+        this->send_command(new String("$H"));
+        break;
+    case KEYCODE_M6_SAFEZ:
+        this->send_command(new String("G53G0Z0"));
+        break;  
+    case KEYCODE_M7_WHOME:
+    // Set work home here or go to work home; do not set/reset Z
+        this->send_command(new String("G10 L20 P0 X0 Y0"));
+        break;
+    case KEYCODE_M8_SPINDLEONOFF:
+        break;
     case KEYCODE_STEP:
         this->jog = 0;
         this->stop_continuous();
