@@ -23,7 +23,8 @@ struct GRBLSTATUS
 };
 
 // From FluidNC/FluidNC/src/Types.h with "enum class" changed to "enum"
-//
+// From FluidNC/FluidNC/src/Report.cpp translates enum to string
+// 
 // System states. The state variable primarily tracks the individual functions
 // to manage each without overlapping. It is also used as a messaging flag for
 // critical events.
