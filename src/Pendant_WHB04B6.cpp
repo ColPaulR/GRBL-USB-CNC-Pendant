@@ -122,7 +122,9 @@ void Pendant_WHB04B6::send_display_report()
         this->display_report_data[R_IDX(3)] = (this->display_report_data[R_IDX(3)] | 0x80);
 
     // send display report data to device
-    this->set_report(0x06, HID_REPORT_TYPE_FEATURE, &this->display_report_data, 24);
+    this->set_report(0x06, HID_REPORT_TYPE_FEATURE, &this->display_report_data, 8);
+    this->set_report(0x06, HID_REPORT_TYPE_FEATURE, &this->display_report_data[8], 8);
+    this->set_report(0x06, HID_REPORT_TYPE_FEATURE, &this->display_report_data[16], 8);
 }
 
 void Pendant_WHB04B6::loop()
