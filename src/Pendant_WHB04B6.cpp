@@ -190,31 +190,78 @@ void Pendant_WHB04B6::on_key_press(uint8_t keycode)
     case KEYCODE_STARTPAUSE:
         StartPauseButton();
         break;
+
+ // Send ButtonCommands 
+    if(keycode<=KEYCODE_M10)
+    {
+        const char* cmd;
+            cmd = WHB04B6ButtonCommandsFN[keycode-1];
+        else
+            cmd = WHB04B6ButtonCommands[keycode-1];
+        if(cmd[0])
+        {
+            String * cmdstr = new String(cmd);
+            this->send_command(cmdstr);
+        }
+
+      
     case KEYCODE_M1_FEEDPLUS:
+      if(this->is_key_pressed(KEYCODE_FN))
+      {
         this->send_command(new String("\x91"));
-        break;
+      } else {
+      }
+      break;
     case KEYCODE_M2_FEEDMINUS:
+      if(this->is_key_pressed(KEYCODE_FN))
+      {
         this->send_command(new String("\x92"));
+      } else {
+      }
         break;
     case KEYCODE_M3_SPINDLEPLUS:
+      if(this->is_key_pressed(KEYCODE_FN))
+      {
         this->send_command(new String("\x9A"));
+      } else {
+      }
         break;
     case KEYCODE_M4_SPINDLEMINUS:
+      if(this->is_key_pressed(KEYCODE_FN))
+      {
         this->send_command(new String("\x9B"));
+      } else {
+      }
         break;
     case KEYCODE_M5_MHOME:
-      // Execute homing here or go to machine home?
+      if(this->is_key_pressed(KEYCODE_FN))
+      {
+        // Execute homing here or go to machine home?
         this->send_command(new String("$H"));
+      } else {
+      }
         break;
     case KEYCODE_M6_SAFEZ:
+      if(this->is_key_pressed(KEYCODE_FN))
+      {
         this->send_command(new String("G53G0Z0"));
+      } else {
+      }
         break;  
     case KEYCODE_M7_WHOME:
-    // Set work home here or go to work home; do not set/reset Z
-        this->send_command(new String("G10 L20 P0 X0 Y0"));
-        break;
+      if(this->is_key_pressed(KEYCODE_FN))
+      {
+        // Set work home here or go to work home; do not set/reset Z
+        this->send_command(new String("G10 L20 P0 X0 Y0"      } else {
+      }   ));
+      break;
     case KEYCODE_M8_SPINDLEONOFF:
-        break;
+       if(this->is_key_pressed(KEYCODE_FN))
+      {
+        // Execute homing here or go to machine home?
+      } else {
+      }
+      break;
     case KEYCODE_STEP:
         this->jog = 0;
         this->stop_continuous();
