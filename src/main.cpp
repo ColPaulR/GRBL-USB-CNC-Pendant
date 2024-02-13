@@ -51,6 +51,9 @@ void loop()
   while (GRBLSerial.available())
   {
     uint8_t c = GRBLSerial.read();
+
+    // Echo
+    Serial.write(c);
     collect(c);
   }
 

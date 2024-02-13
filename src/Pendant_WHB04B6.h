@@ -7,8 +7,8 @@
 #include "USBHIDPendant.h"
 #include "GrblCode.h"
 
-#define REPORT_INTERVAL 2000
-#define CMD_STEP_INTERVAL 100
+#define REPORT_INTERVAL 500
+#define CMD_STEP_INTERVAL 50
 #define CMD_CONTINUOUS_CHECK_INTERVAL 100
 #define CMD_CONTINUOUS_UPDATE_INTERVAL 500
 #define SEED 0xff
