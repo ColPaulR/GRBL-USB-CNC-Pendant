@@ -182,6 +182,7 @@ void Pendant_WHB04B6::on_key_press(uint8_t keycode)
     Serial.println(keycode, HEX);
 
     // Send ButtonCommands
+    // Execute regardless of Function key
     switch (keycode)
     {
     case KEYCODE_RESET:
@@ -194,94 +195,56 @@ void Pendant_WHB04B6::on_key_press(uint8_t keycode)
     case KEYCODE_STARTPAUSE:
         StartPauseButton();
         break;
-    case KEYCODE_M1_FEEDPLUS:
-        if (this->is_key_pressed(KEYCODE_FN))
-        {
-            this->send_command(new String("\x91"));
-        }
-        else
-        {
-        }
-        break;
-    case KEYCODE_M2_FEEDMINUS:
-        if (this->is_key_pressed(KEYCODE_FN))
-        {
-            this->send_command(new String("\x92"));
-        }
-        else
-        {
-        }
-        break;
-    case KEYCODE_M3_SPINDLEPLUS:
-        if (this->is_key_pressed(KEYCODE_FN))
-        {
-            this->send_command(new String("\x9A"));
-        }
-        else
-        {
-        }
-        break;
-    case KEYCODE_M4_SPINDLEMINUS:
-        if (this->is_key_pressed(KEYCODE_FN))
-        {
-            this->send_command(new String("\x9B"));
-        }
-        else
-        {
-        }
-        break;
-    case KEYCODE_M5_MHOME:
-        if (this->is_key_pressed(KEYCODE_FN))
-        {
-            // Execute homing here or go to machine home?
-            this->send_command(new String("$H"));
-        }
-        else
-        {
-        }
-        break;
-    case KEYCODE_M6_SAFEZ:
-        if (this->is_key_pressed(KEYCODE_FN))
-        {
-            this->send_command(new String("G53G0Z0"));
-        }
-        else
-        {
-        }
-        break;
-    case KEYCODE_M7_WHOME:
-        if (this->is_key_pressed(KEYCODE_FN))
-        {
-            // Set work home here or go to work home; do not set/reset Z
-        this->send_command(new String("G10 L20 P0 X0 Y0"));
-        }
-        else
-        {
-        } 
-        break;
-    case KEYCODE_M8_SPINDLEONOFF:
-        if (this->is_key_pressed(KEYCODE_FN))
-        {
-            // Execute homing here or go to machine home?
-        }
-        else
-        {
-        }
+    case KEYCODE_CONTINUOUS:
+        this->jog = 0;
+        this->mode = Mode::Continuous;
+        this->last_continuous_check = millis();
         break;
     case KEYCODE_STEP:
         this->jog = 0;
         this->stop_continuous();
         this->mode = Mode::Step;
         break;
-    case KEYCODE_CONTINUOUS:
-        this->jog = 0;
-        this->mode = Mode::Continuous;
-        this->last_continuous_check = millis();
-        break;
-    default:
-        Serial.print("Not function defined for key press: ");
-        Serial.println(keycode, HEX);
-    }
+    case default:
+        if (this->is_key_pressed(KEYCODE_FN))
+          switch (keycode)
+          {
+            case KEYCODE_M1_FEEDPLUS:
+              this->send_command(new String("\x91"));
+              break;
+            case KEYCODE_M2_FEEDMINUS:
+               this->send_command(new String("\x92"));
+               break;
+            case KEYCODE_M3_SPINDLEPLUS:
+              this->send_command(new String("\x9A"));
+              break;
+            case KEYCODE_M4_SPINDLEMINUS:
+              this->send_command(new String("\x9B"));
+              break;
+            case KEYCODE_M5_MHOME:
+              this->send_command(new String("$H"));
+              break;
+          case KEYCODE_M6_SAFEZ:
+              this->send_command(new String("G53G0Z0"));
+              break;
+          case KEYCODE_M7_WHOME:
+              // Set work home here ; do not set/reset Z
+              this->send_command(new String("G10 L20 P0 X0 Y0"));
+              break;
+          case KEYCODE_M8_SPINDLEONOFF:
+              // Execute spindle toggle here
+              if 
+              break;
+          default:
+            Serial.print("Not function defined for key press: ");
+            Serial.println(keycode, HEX);
+        }
+      } else
+        RunMacro(keycode);
+      break;
+
+        
+    
 }
 
 void Pendant_WHB04B6::on_key_release(uint8_t keycode)
@@ -351,6 +314,46 @@ void Pendant_WHB04B6::stop_continuous()
 }
 
 void Pendant_WHB04B6::StartPauseButton()
+{
+    // Insert pause/start logic here
+    switch (this->state)
+    {
+    case State::Cycle:
+    case State::Jog:
+    case State::Homing:
+        // Hold
+        this->send_command(new String("!"));
+        break;
+    case State::Hold:
+        // Resume
+        this->send_command(new String("~"));
+        break;
+    case State::Alarm:
+        // clear alarm
+        this->send_command(new String("$x"));
+        break;
+    default:
+        Serial.printf("Pause/run in GRBL State: %d not defined\r\n", this->state);
+    }
+}
+
+void Pendant_WHB04B6::RunMacro(uint8_t MacroNumber)
+{
+            // New string to execute Macro associated with button press
+            String *cmd = new String("$SD/Run=/Macro");
+
+            // Append macro number
+            cmd->concat(MacroNumber);
+            // append extension
+            cmd->concat(".nc");
+
+            // Echo
+            // Serial.write(cmd->c_str());
+
+            this->send_command(cmd);
+}
+
+void Pendant_WHB04B6::SpindleToggle()
 {
     // Insert pause/start logic here
     switch (this->state)
