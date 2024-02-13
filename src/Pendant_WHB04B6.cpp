@@ -11,7 +11,8 @@ Pendant_WHB04B6::Pendant_WHB04B6(uint8_t dev_addr, uint8_t instance) : USBHIDPen
                                                                        jog(0),
                                                                        selected_axis(0),
                                                                        display_axis_offset(0),
-                                                                       selected_feed(0)
+                                                                       selected_feed(0),
+                                                                       spindle_last(0)
 {
     this->send_display_report();
     // DEMO DATA
@@ -356,7 +357,7 @@ void Pendant_WHB04B6::RunMacro(uint8_t MacroNumber)
 void Pendant_WHB04B6::SpindleToggle()
 {
     // Insert pause/start logic here
-    switch (this->state)
+    switch (this->)
     {
     case State::Cycle:
     case State::Jog:
