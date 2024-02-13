@@ -189,7 +189,7 @@ void Pendant_WHB04B6::on_key_press(uint8_t keycode)
         break;
     case KEYCODE_STOP:
         // hold
-        this->send_command(new String("!"));
+        this->send_command(new String("\x18"));
         break;
     case KEYCODE_STARTPAUSE:
         StartPauseButton();
