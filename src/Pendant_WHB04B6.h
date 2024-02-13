@@ -92,7 +92,7 @@ private:
   {
     Step = 0,
     Continuous
-  } mode = Mode::Continuous;
+  } mode = Mode::Step;
 };
 
 const uint16_t WHB04B6ContinuousFeeds[] = {6000, 6000, 6000, 6000, 6000, 6000};
