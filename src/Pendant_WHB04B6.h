@@ -73,6 +73,7 @@ private:
   unsigned long last_display_report;
   int16_t jog;
   unsigned machine_coordinates;
+  uint8_t spindle_last;
   void on_key_press(uint8_t keycode) override;
   void on_key_release(uint8_t keycode) override;
   void handle_continuous_check();
