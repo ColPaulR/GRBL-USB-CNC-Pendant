@@ -58,12 +58,12 @@ void loop()
   }
 
   // Send periodic requests
-  static unsigned long last_mount_check = millis();
-  unsigned long now=millis();
-  if((now-last_mount_check)>GRBL_QUERY_INTERVAL)
-  {
-    last_mount_check = millis();
-    // Query status
-    GRBLSerial.write('?');
-  }
+  // static unsigned long last_mount_check = millis();
+  // unsigned long now=millis();
+  // if((now-last_mount_check)>GRBL_QUERY_INTERVAL)
+  // {
+  //   last_mount_check = millis();
+  //   // Query status
+  //   GRBLSerial.write('?');
+  // }
 }

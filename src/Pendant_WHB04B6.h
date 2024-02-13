@@ -8,7 +8,7 @@
 #include "GrblCode.h"
 
 #define REPORT_INTERVAL 1000
-#define CMD_STEP_INTERVAL 1000
+#define CMD_STEP_INTERVAL 100
 #define CMD_CONTINUOUS_CHECK_INTERVAL 100
 #define CMD_CONTINUOUS_UPDATE_INTERVAL 500
 #define SEED 0xff
@@ -69,7 +69,7 @@ private:
   void uint16_to_report_bytes(uint16_t val, uint8_t idx_lower, uint8_t idx_upper);
   double axis_coordinates[6];
   uint8_t display_report_data[48];
-  uint8_t selected_axis, display_axis_offset, selected_feed;
+  uint8_t selected_axis, display_axis_offset, selected_feed, spindle;
   unsigned long last_display_report;
   int16_t jog;
   unsigned machine_coordinates;
@@ -80,6 +80,8 @@ private:
   void handle_continuous_update();
   void stop_continuous();
   void StartPauseButton();
+  void RunMacro(uint8_t MacroNumber);
+  void SpindleToggle();
 
   uint8_t continuous_axis = 0;
   bool continuous_direction;

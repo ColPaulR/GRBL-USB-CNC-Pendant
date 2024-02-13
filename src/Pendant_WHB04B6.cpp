@@ -136,7 +136,6 @@ void Pendant_WHB04B6::loop()
         uint8_t feed = FEEDSELECTOR_TO_LINEAR(this->selected_feed);
         if (this->mode == Mode::Step && this->jog != 0 && this->selected_axis >= AXISSELCTOR_X && this->selected_axis <= AXISSELCTOR_C && feed && feed <= FEEDSELECTOR_STEP_STEPS)
         {
-            Serial.print("Jog\n\r");
             float step_size = WHB04B6StepSizes[feed - 1];
             uint8_t axis = this->selected_axis - AXISSELCTOR_X;
 
@@ -151,7 +150,7 @@ void Pendant_WHB04B6::loop()
             // Append feed rate
             cmd->concat("F");
             cmd->concat(WHB04B6ContinuousFeeds[axis]);
-            
+
             // Echo
             // Serial.write(cmd->c_str());
 
@@ -206,46 +205,48 @@ void Pendant_WHB04B6::on_key_press(uint8_t keycode)
         this->stop_continuous();
         this->mode = Mode::Step;
         break;
-    case default:
+    default:
         if (this->is_key_pressed(KEYCODE_FN))
-          switch (keycode)
-          {
+        {
+            switch (keycode)
+            {
             case KEYCODE_M1_FEEDPLUS:
-              this->send_command(new String("\x91"));
-              break;
+                this->send_command(new String("\x91"));
+                break;
             case KEYCODE_M2_FEEDMINUS:
-               this->send_command(new String("\x92"));
-               break;
+                this->send_command(new String("\x92"));
+                break;
             case KEYCODE_M3_SPINDLEPLUS:
-              this->send_command(new String("\x9A"));
-              break;
+                this->send_command(new String("\x9A"));
+                break;
             case KEYCODE_M4_SPINDLEMINUS:
-              this->send_command(new String("\x9B"));
-              break;
+                this->send_command(new String("\x9B"));
+                break;
             case KEYCODE_M5_MHOME:
-              this->send_command(new String("$H"));
-              break;
-          case KEYCODE_M6_SAFEZ:
-              this->send_command(new String("G53G0Z0"));
-              break;
-          case KEYCODE_M7_WHOME:
-              // Set work home here ; do not set/reset Z
-              this->send_command(new String("G10 L20 P0 X0 Y0"));
-              break;
-          case KEYCODE_M8_SPINDLEONOFF:
-              // Execute spindle toggle here
-              if 
-              break;
-          default:
-            Serial.print("Not function defined for key press: ");
-            Serial.println(keycode, HEX);
+                this->send_command(new String("$H"));
+                break;
+            case KEYCODE_M6_SAFEZ:
+                this->send_command(new String("G53G0Z0"));
+                break;
+            case KEYCODE_M7_WHOME:
+                // Set work home here ; do not set/reset Z
+                this->send_command(new String("G10 L20 P0 X0 Y0"));
+                break;
+            case KEYCODE_M8_SPINDLEONOFF:
+                // Execute spindle toggle here
+                // if
+                break;
+            default:
+                Serial.print("Not function defined for key press: ");
+                Serial.println(keycode, HEX);
+            }
         }
-      } else
-        RunMacro(keycode);
-      break;
-
-        
-    
+        else
+        {
+            RunMacro(keycode);
+        }
+        break;
+    }
 }
 
 void Pendant_WHB04B6::on_key_release(uint8_t keycode)
@@ -270,6 +271,9 @@ void Pendant_WHB04B6::grblstatus_received(GRBLSTATUS *grblstatus)
 
     // Save state enumeration
     this->state = grblstatus->State;
+
+    // Save spindle enumeration
+    this->state = grblstatus->spindle;
 
     this->send_display_report();
 }
@@ -340,40 +344,44 @@ void Pendant_WHB04B6::StartPauseButton()
 
 void Pendant_WHB04B6::RunMacro(uint8_t MacroNumber)
 {
-            // New string to execute Macro associated with button press
-            String *cmd = new String("$SD/Run=/Macro");
+    // New string to execute Macro associated with button press
+    String *cmd = new String("$SD/Run=/Macro");
 
-            // Append macro number
-            cmd->concat(MacroNumber);
-            // append extension
-            cmd->concat(".nc");
+    // Append macro number
+    cmd->concat(MacroNumber);
+    // append extension
+    cmd->concat(".nc");
 
-            // Echo
-            // Serial.write(cmd->c_str());
+    // Echo
+    // Serial.write(cmd->c_str());
 
-            this->send_command(cmd);
+    this->send_command(cmd);
 }
 
 void Pendant_WHB04B6::SpindleToggle()
 {
-    // Insert pause/start logic here
-    switch (this->)
+    if (this->spindle == 0)
     {
-    case State::Cycle:
-    case State::Jog:
-    case State::Homing:
-        // Hold
-        this->send_command(new String("!"));
-        break;
-    case State::Hold:
-        // Resume
-        this->send_command(new String("~"));
-        break;
-    case State::Alarm:
-        // clear alarm
-        this->send_command(new String("$x"));
-        break;
-    default:
-        Serial.printf("Pause/run in GRBL State: %d not defined\r\n", this->state);
+        // spindle is stopped
+        switch (this->spindle_last)
+        {
+        case 1:
+            // spindle was spinning clockwise last
+            this->send_command(new String("M3"));
+            break;
+        case 2:
+            // spindle was spinning counter clockwise last
+            this->send_command(new String("M4"));
+            break;
+        default:
+            // spindle_last is uninitialized; do nothing
+            break;
+        }
+    }
+    else
+    {
+        // Spindle is spinning; save directiong and stop
+        this->spindle_last = this->spindle;
+        this->send_command(new String("M5"));
     }
 }

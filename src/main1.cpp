@@ -157,20 +157,22 @@ void loop1()
   if (rp2040.fifo.available())
     GrblStatus = (GRBLSTATUS *)rp2040.fifo.pop();
 
-  // loop through devices, forward grbl status messages and call loop function
+  // loop through devices, forward any grbl status messages and call loop function
   for (uint8_t i = 0; i < MAX_DEV; i++)
   {
     if (devices[i].object)
     {
       if (GrblStatus)
         devices[i].object->grblstatus_received(GrblStatus);
+
       devices[i].object->loop();
     }
-
-    // Cleanup
-    delete GrblStatus;
   }
+  // Cleanup
+  if (GrblStatus)
+    delete GrblStatus;
 }
+
 
 // Invoked when device with hid interface is mounted
 // Report descriptor is also available for use.
