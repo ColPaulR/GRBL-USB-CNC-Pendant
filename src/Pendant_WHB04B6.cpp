@@ -135,6 +135,7 @@ void Pendant_WHB04B6::loop()
         uint8_t feed = FEEDSELECTOR_TO_LINEAR(this->selected_feed);
         if (this->mode == Mode::Step && this->jog != 0 && this->selected_axis >= AXISSELCTOR_X && this->selected_axis <= AXISSELCTOR_C && feed && feed <= FEEDSELECTOR_STEP_STEPS)
         {
+            Serial.print("Jog\n\r");
             float step_size = WHB04B6StepSizes[feed - 1];
             uint8_t axis = this->selected_axis - AXISSELCTOR_X;
 
@@ -149,22 +150,25 @@ void Pendant_WHB04B6::loop()
             // Append feed rate
             cmd->concat("F");
             cmd->concat(WHB04B6ContinuousFeeds[axis]);
+            
+            // Echo
+            // Serial.write(cmd->c_str());
 
             this->send_command(cmd);
             this->jog = 0;
         }
     }
-    if (this->mode == Mode::Continuous)
-    {
-        if ((now - last_continuous_check) > CMD_CONTINUOUS_CHECK_INTERVAL)
-        {
-            this->handle_continuous_check();
-        }
-        if ((now - last_continuous_update) > CMD_CONTINUOUS_UPDATE_INTERVAL)
-        {
-            this->handle_continuous_update();
-        }
-    }
+    // if (this->mode == Mode::Continuous)
+    // {
+    //     if ((now - last_continuous_check) > CMD_CONTINUOUS_CHECK_INTERVAL)
+    //     {
+    //         this->handle_continuous_check();
+    //     }
+    //     if ((now - last_continuous_update) > CMD_CONTINUOUS_UPDATE_INTERVAL)
+    //     {
+    //         this->handle_continuous_update();
+    //     }
+    // }
 
     if ((now - this->last_display_report) > REPORT_INTERVAL)
     {
