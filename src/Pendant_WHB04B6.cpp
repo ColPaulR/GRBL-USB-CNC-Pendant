@@ -344,8 +344,16 @@ void Pendant_WHB04B6::StartPauseButton()
 
 void Pendant_WHB04B6::RunMacro(uint8_t MacroNumber)
 {
+    
+    if (MacroNumber == 0x0c)
+        return;
+
     // New string to execute Macro associated with button press
     String *cmd = new String("$SD/Run=/Macro");
+
+    // Adjust MacroNumber to match linearly numbered filenames "Macro1.nc" through "Macro10.nc"
+    MacroNumber = ((MacroNumber<0x0c) ? MacroNumber-3 : MacroNumber - 4);
+    MacroNumber = ((MacroNumber<10) ? MacroNumber : MacroNumber - 2);
 
     // Append macro number
     cmd->concat(MacroNumber);
