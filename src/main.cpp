@@ -39,7 +39,8 @@ void loop()
 
     cmd = (String *)rp2040.fifo.pop();
     // Echo to debug port
-    Serial.println(*cmd);
+    // Serial.println(*cmd);
+    
     // send to GRBL Host
     GRBLSerial.print(*cmd);
 
@@ -53,7 +54,7 @@ void loop()
     uint8_t c = GRBLSerial.read();
 
     // Echo
-    Serial.write(c);
+    // Serial.write(c);
     collect(c);
   }
 
