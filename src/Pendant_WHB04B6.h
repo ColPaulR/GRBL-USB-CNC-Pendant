@@ -123,4 +123,6 @@ const uint16_t WHB04B6FeedRateStep[] =
 
 const char WHB04B6ContinuousRunCommand[] = "M98 P\"pendant-continuous-run.g\" A\"%c\" F%u D%u";
 const char WHB04B6ContinuousStopCommand[] = "\x85";
+const char WHB04B6MacroRunCommand[] = "$LocalFS/Run=/P_Macro";
+// const char WHB04B6MacroRunCommand[] = "$RM=";
 #endif

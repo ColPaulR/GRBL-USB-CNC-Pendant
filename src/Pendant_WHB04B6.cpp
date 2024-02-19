@@ -243,7 +243,19 @@ void Pendant_WHB04B6::on_key_press(uint8_t keycode)
         }
         else
         {
-            RunMacro(keycode);
+            switch (keycode)
+            {
+            // macros 1 through 8 are keycodes 4 through 11
+            case KEYCODE_M1_FEEDPLUS ... KEYCODE_M8_SPINDLEONOFF:
+                RunMacro(keycode - 3);
+                break;
+            case KEYCODE_M9_PROBEZ:
+                RunMacro(9);
+                break;
+            case KEYCODE_M10:
+                RunMacro(10);
+                break;
+            }
         }
         break;
     }
@@ -344,20 +356,13 @@ void Pendant_WHB04B6::StartPauseButton()
 
 void Pendant_WHB04B6::RunMacro(uint8_t MacroNumber)
 {
-    
-    if (MacroNumber == 0x0c)
-        return;
-
     // New string to execute Macro associated with button press
-    String *cmd = new String("$SD/Run=/Macro");
-
-    // Adjust MacroNumber to match linearly numbered filenames "Macro1.nc" through "Macro10.nc"
-    MacroNumber = ((MacroNumber<0x0c) ? MacroNumber-3 : MacroNumber - 4);
-    MacroNumber = ((MacroNumber<10) ? MacroNumber : MacroNumber - 2);
+    String *cmd = new String(WHB04B6MacroRunCommand);
 
     // Append macro number
     cmd->concat(MacroNumber);
-    // append extension
+
+    // append extension if required
     cmd->concat(".nc");
 
     // Echo
