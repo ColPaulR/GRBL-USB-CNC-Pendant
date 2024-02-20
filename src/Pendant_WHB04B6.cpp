@@ -1,4 +1,5 @@
 #include "Pendant_WHB04B6.h"
+#include "SerialDebug.h"
 
 // For Reference:
 // https://github.com/LinuxCNC/linuxcnc/tree/master/src/hal/user_comps/xhc-WHB04B6
@@ -100,8 +101,9 @@ void Pendant_WHB04B6::send_display_report()
 {
     this->last_display_report = millis();
 
-    // Debug help
-    // Serial.printf("X:%f,Y:%f,Z%f,A%f\r\n", this->axis_coordinates[0], this->axis_coordinates[1], this->axis_coordinates[2], this->axis_coordinates[3]);
+#if SERIALDEBUG > 1
+    Serial.printf("X:%f,Y:%f,Z%f,A%f\r\n", this->axis_coordinates[0], this->axis_coordinates[1], this->axis_coordinates[2], this->axis_coordinates[3]);
+#endif
 
     // update axis coordinates in display report data
     this->double_to_report_bytes(axis_coordinates[0 + this->display_axis_offset], 4, 5, 6, 7);
@@ -151,8 +153,9 @@ void Pendant_WHB04B6::loop()
             cmd->concat("F");
             cmd->concat(WHB04B6ContinuousFeeds[axis]);
 
-            // Echo
-            // Serial.write(cmd->c_str());
+#if SERIALDEBUG > 1
+            Serial.write(cmd->c_str());
+#endif
 
             this->send_command(cmd);
             this->jog = 0;
@@ -178,8 +181,10 @@ void Pendant_WHB04B6::loop()
 
 void Pendant_WHB04B6::on_key_press(uint8_t keycode)
 {
+#if SERIALDEBUG > 0
     Serial.print("Key Press: ");
     Serial.println(keycode, HEX);
+#endif
 
     // Send ButtonCommands
     // Execute regardless of Function key
@@ -236,9 +241,11 @@ void Pendant_WHB04B6::on_key_press(uint8_t keycode)
                 // Execute spindle toggle here
                 // if
                 break;
+#if SERIALDEBUG > 0
             default:
                 Serial.print("Not function defined for key press: ");
                 Serial.println(keycode, HEX);
+#endif
             }
         }
         else
@@ -263,13 +270,18 @@ void Pendant_WHB04B6::on_key_press(uint8_t keycode)
 
 void Pendant_WHB04B6::on_key_release(uint8_t keycode)
 {
+#if SERIALDEBUG > 0
     Serial.print("Key Release: ");
     Serial.println(keycode, HEX);
+#endif
 }
 
 void Pendant_WHB04B6::grblstatus_received(GRBLSTATUS *grblstatus)
 {
-    // Serial.printf("X:%f,Y:%f,Z%f,A%f\n",grblstatus->axis_Position[0],grblstatus->axis_Position[1],grblstatus->axis_Position[2],grblstatus->axis_Position[3]);
+#if SERIALDEBUG > 1
+    Serial.printf("X:%f,Y:%f,Z%f,A%f\n", grblstatus->axis_Position[0], grblstatus->axis_Position[1], grblstatus->axis_Position[2], grblstatus->axis_Position[3]);
+#endif
+
     for (uint8_t i = 0; i < (grblstatus->nAxis); i++)
         this->axis_coordinates[i] = grblstatus->axis_Position[i];
 
@@ -349,8 +361,10 @@ void Pendant_WHB04B6::StartPauseButton()
         // clear alarm
         this->send_command(new String("$x"));
         break;
+#if SERIALDEBUG > 0
     default:
         Serial.printf("Pause/run in GRBL State: %d not defined\r\n", this->state);
+#endif
     }
 }
 
@@ -365,8 +379,10 @@ void Pendant_WHB04B6::RunMacro(uint8_t MacroNumber)
     // append extension if required
     cmd->concat(".nc");
 
-    // Echo
-    // Serial.write(cmd->c_str());
+// Echo
+#if SERIALDEBUG > 0
+    Serial.write(cmd->c_str());
+#endif
 
     this->send_command(cmd);
 }

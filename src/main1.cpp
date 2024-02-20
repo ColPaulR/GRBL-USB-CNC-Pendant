@@ -3,6 +3,7 @@
 #include "USBHIDPendant.h"
 #include "Pendant_WHB04B6.h"
 #include "GrblCode.h"
+#include "SerialDebug.h"
 
 // Example used as base for USB HID stuff:
 // https://github.com/adafruit/Adafruit_TinyUSB_Arduino/tree/master/examples/DualRole/HID/hid_device_report
@@ -35,48 +36,6 @@ tusb_desc_device_t desc_device;
 #define MOUNT_CHECK_INTERVAL 1000
 #define MAX_DEV 5
 struct USBHIDPendantDevice devices[MAX_DEV];
-
-// Recreate status message from structure passed
-/*void PrintGrblStatusMsg(struct GRBLSTATUS *GrblStatus)
-{
-  // Print message as received
-  // Serial.printf("Received: <%s|", GrblStatus->cStatus);
-  //
-  // Example:
-  //   Idle|MPos:151.000,149.000,-1.000|Pn:XP|FS:0,0|WCO:12.000,28.000,78.000
-
-  Serial.printf("<%s|", GrblStatus->cStatus);
-  if (GrblStatus->isMpos)
-    Serial.printf("MPos:%3.3f", GrblStatus->axis_Position[0]);
-  else
-    Serial.printf("WPos:%3.3f", GrblStatus->axis_Position[0]);
-  for (int i = 1; i < GrblStatus->nAxis; i++)
-    Serial.printf(",%3.3f", GrblStatus->axis_Position[i]);
-
-  Serial.printf("|FS:%d,%d", GrblStatus->feedrate, GrblStatus->spindle_speed);
-  // Serial.printf("|WCO:%3.3f", GrblStatus->axis_WCO[0]);
-  switch (GrblStatus->spindle)
-  {
-  case 1:
-    Serial.print("|A:S");
-    break;
-  case 2:
-    Serial.print("|A:C");
-    break;
-  default:
-    Serial.print("|A:");
-    break;
-  }
-
-  if (GrblStatus->mist)
-    Serial.print("M");
-
-  if (GrblStatus->flood)
-    Serial.print("F");
-
-  Serial.print(">\r\n");
-}
-*/
 
 // the setup function runs once when you press reset or power the board
 
@@ -129,7 +88,9 @@ void check_devices_still_mounted()
     {
       if (!tuh_hid_mounted(devices[i].dev_addr, devices[i].instance))
       {
+#if SERIALDEBUG > 0
         Serial.printf("HID device address = %d, instance = %d no more mounted\r\n", devices[i].dev_addr, devices[i].instance);
+#endif
         delete devices[i].object;
         devices[i].object = 0;
       }
@@ -150,8 +111,7 @@ void loop1()
     check_devices_still_mounted();
   }
 
-  // check for new Duet status messages from Serial routines on other core
-  // DuetStatus * duetstatus = 0;
+  // check for new Grbl status messages from Serial routines on other core
   // Create pointer to new structure and set to null address
   GRBLSTATUS *GrblStatus = 0;
   if (rp2040.fifo.available())
@@ -173,7 +133,6 @@ void loop1()
     delete GrblStatus;
 }
 
-
 // Invoked when device with hid interface is mounted
 // Report descriptor is also available for use.
 // tuh_hid_parse_report_descriptor() can be used to parse common/simple enough
@@ -185,6 +144,7 @@ void tuh_hid_mount_cb(uint8_t dev_addr, uint8_t instance, uint8_t const *desc_re
   (void)desc_len;
   uint16_t vid, pid;
 
+#if SERIALDEBUG > 1
   if (desc_len)
   {
     for (uint8_t i = 0; i < desc_len; i++)
@@ -197,6 +157,7 @@ void tuh_hid_mount_cb(uint8_t dev_addr, uint8_t instance, uint8_t const *desc_re
     }
     Serial.println();
   }
+#endif
 
   // check if already mounted, immitate unmount first if it is
   for (uint8_t i = 0; i < MAX_DEV; i++)

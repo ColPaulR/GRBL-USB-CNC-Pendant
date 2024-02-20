@@ -11,7 +11,7 @@ void show_state(const char *state)
 {
     // From FluidNC/FluidNC/src/Report.cpp, possible string states are"
     //    "Idle", "Run" , "Jog", "Home", " Alarm", "Check", "Door:x", "Sleep"
-    
+
     // Parse GRBL state; set to undefined by default
     GrblStatus.State = State::Undefined;
 
@@ -37,10 +37,12 @@ void show_state(const char *state)
         return;
     }
 
+#if SERIALDEBUG > 0
     // State state not handled above
     Serial.print("Grbl State ");
     Serial.print(state);
     Serial.println(" not handled");
+#endif
 };
 
 void show_dro(const pos_t *axes, const pos_t *wcos, bool isMpos, bool *limits, size_t n_axis)

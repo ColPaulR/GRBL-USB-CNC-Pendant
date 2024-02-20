@@ -2,6 +2,7 @@
 
 #include "GrblParserC.h"
 #include "USBHIDPendant.h"
+#include "SerialDebug.h"
 
 #define GRBLSerial Serial1 // UART0
 #define GRBLSerialTXPin 12
@@ -38,9 +39,12 @@ void loop()
     String *cmd;
 
     cmd = (String *)rp2040.fifo.pop();
+
+#if SERIALDEBUG > 1
     // Echo to debug port
-    // Serial.println(*cmd);
-    
+    Serial.println(*cmd);
+#endif
+
     // send to GRBL Host
     GRBLSerial.print(*cmd);
 
@@ -53,11 +57,16 @@ void loop()
   {
     uint8_t c = GRBLSerial.read();
 
+#if SERIALDEBUG > 1
     // Echo
     // Serial.write(c);
+    #endif
     collect(c);
   }
 
+  // Currently using reporting interval so no status request is required
+  // Uncomment below if periodic requests are needed
+  
   // Send periodic requests
   // static unsigned long last_mount_check = millis();
   // unsigned long now=millis();
