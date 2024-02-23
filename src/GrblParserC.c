@@ -213,11 +213,11 @@ static void parse_status_report(char* field) {
     bool           has_filename = false;
     char*          filename     = '\0';
     file_percent_t file_percent = 0;
-
+    
     // WCOs are not issued on every status report so we must
     // remember the last value.
     static pos_t wcos[MAX_N_AXIS] = { 0 };
-
+    
     // feedrate,spindle_speed
     uint32_t           fs[2];
     override_percent_t frs[MAX_N_AXIS] = { 0 };
