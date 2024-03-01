@@ -7,7 +7,8 @@
 #define GRBLSerial Serial1 // UART0
 #define GRBLSerialTXPin 12
 #define GRBLSerialRXPin 13
-#define GRBLSerialBaud 57600
+// #define GRBLSerialBaud 57600
+#define GRBLSerialBaud 115200
 
 #define GRBL_QUERY_INTERVAL 1000
 
