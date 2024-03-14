@@ -8,19 +8,39 @@ This project is inspired and partly based on:
 - [Adafruit TinyUSB HID Example](https://github.com/adafruit/Adafruit_TinyUSB_Arduino/tree/master/examples/DualRole/HID/hid_device_report)
 - [PendantsForFluidNC's GrblParserC library](https://github.com/bdring/PendantsForFluidNC)
 
-# !!!!!!  The remaining content is unchanged from Duet USB CNC Pendant !!!!!! 
-
-
 It uses the GPIO ports of a **Raspberry Pi Pico** to create an USB Host Port (using [Pico-PIO-USB](https://github.com/sekigon-gonnoc/Pico-PIO-USB)) to listen for input from USB devices and generates G-Code commands to control a Duet based CNC machine.
 
 First, the idea was to just use a simple wireless numpad for jogging.  
 But I later got the idea that a feature rich CNC pendant (like the WHB04B-6) should be possible, too.  
-So it also can read object model status responses from the Duet to pass the current axis coordinates to the pendant for displaying.
+So it also can read status responses from GRBL to pass the current axis coordinates to the pendant for displaying.
 
 It is also possible to connect and use multiple USB devices at the same time via a USB hub.
 
 Implementation is limited so far, see functions below.
 
+# !!!!!!  This project was designed for FluidNC and exploits FluidNC's autoresponse functional !!!
+
+If you are using FluidNC, see the below and see [UART Sections](http://wiki.fluidnc.com/en/config/uart_sections) for more details on definition a UART and configuration for autoreport. You can define UART sections at the top level of FluidNC's YAML config file. Below is the section of my YAML config file.
+
+<link type="text/css" rel="stylesheet" href="https://use.fontawesome.com/releases/v5.10.0/css/all.css"><link type="text/css" rel="stylesheet" href="/_assets/css/app.657df69b59208bd55689.css">
+<pre v-pre="true" class="prismjs line-numbers"><code class="language-yaml">uart1:
+  txd_pin: gpio.0
+  rxd_pin: gpio.4
+  baud: 115200
+  mode: 8N1
+</code></pre>
+<pre v-pre="true" class="prismjs line-numbers"><code class="language-yaml">uart_channel1:
+   uart_num: 1
+   report_interval_ms: 125
+   message_level: None
+</code></pre>
+
+GRBL status polling is disabled in main.cpp by:
+    <code>#define GRBL_QUERY_INTERVAL 0</code>
+
+# Non-FluidNC GRBL Controller
+If you are not using FluidNC and your controller does not autorerport, change the GRBL status messages polling interval in main.cpp to some small number of milliseconds.
+#define GRBL_QUERY_INTERVAL 125
 ## Supported Devices
 
 ###  Keyboard / Numpad
@@ -52,6 +72,9 @@ Implementing other USB HID devices can be done by adding a adequate Pendant clas
 ## Wiring
 
 ![Wiring Diagram](doc/wiring.png)
+
+
+# !!!!!!  The remaining content is unchanged from Duet USB CNC Pendant !!!!!! 
 
 ### USB Pendant Socket
 | RPi Pico | USB A Socket | Note                |
