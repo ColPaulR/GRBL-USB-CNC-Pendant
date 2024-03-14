@@ -42,7 +42,7 @@ GRBL status polling is disabled in main.cpp by:
 If you are not using FluidNC and your controller does not autorerport, change the GRBL status messages polling interval in main.cpp to some small number of milliseconds.
 #define GRBL_QUERY_INTERVAL 125
 ## Supported Devices
-
+<!-- 
 ###  Keyboard / Numpad
 * **Key mapping is made for the LogiLink ID0120 Numpad**, but other numpads or keyboards can be used, too.
 * Arrow keys are used for jogging X/Y axes, +/- for Z axis as single step per key press.
@@ -51,7 +51,7 @@ If you are not using FluidNC and your controller does not autorerport, change th
 * On any key press, the Numlock LED is toggled as feedback
 
 Other numpads should work as well, just change USB VID and PID in main1.cpp / tuh_hid_mount_cb().
-
+--> 
 ### WHB04B-6 Wireless CNC Pendant
 * Jogging with wheel with selected axis and step size (0.001mm/.../1mm).
 * Changing jogging feed rate with Feed+/- buttons
@@ -59,12 +59,13 @@ Other numpads should work as well, just change USB VID and PID in main1.cpp / tu
 * Most buttons simply try executing macros on the Duet.
 
 Implementation is based on information from https://github.com/LinuxCNC/linuxcnc/tree/master/src/hal/user_comps/xhc-whb04b-6
-
+<!--
 ### PS3 DualShock 3 Controller
 * Jogging with directional buttons for X/Y axes, left and right shoulder buttons for Z axis.
 * Trigger buttons to change step size (off/0.01mm/0.1mm/1mm/10mm).
 * Current step size is indicated by the controller number indicator LEDs (1=0.01mm, ... , 4=10mm).
 * Other buttons simply try executing macros on the Duet.
+-->
 
 ### Other
 Implementing other USB HID devices can be done by adding a adequate Pendant class and extending main1.cpp / tuh_hid_mount_cb().
