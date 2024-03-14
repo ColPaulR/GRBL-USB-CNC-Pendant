@@ -205,7 +205,7 @@ void Pendant_WHB04B6::loop()
 
 void Pendant_WHB04B6::on_key_press(uint8_t keycode)
 {
-#if SERIALDEBUG > 0
+#if (KEYPRESS_ECHO)
     Serial.print("Key Press: ");
     Serial.println(keycode, HEX);
 #endif
@@ -294,7 +294,7 @@ void Pendant_WHB04B6::on_key_press(uint8_t keycode)
 
 void Pendant_WHB04B6::on_key_release(uint8_t keycode)
 {
-#if SERIALDEBUG > 0
+#if (KEYRELEASE_ECHO)
     Serial.print("Key Release: ");
     Serial.println(keycode, HEX);
 #endif
@@ -302,8 +302,8 @@ void Pendant_WHB04B6::on_key_release(uint8_t keycode)
 
 void Pendant_WHB04B6::grblstatus_received(GRBLSTATUS *grblstatus)
 {
-#if SERIALDEBUG > 1
-    Serial.printf("X:%f,Y:%f,Z%f,A%f\n", grblstatus->axis_Position[0], grblstatus->axis_Position[1], grblstatus->axis_Position[2], grblstatus->axis_Position[3]);
+#if (GRBLSTATUS_STRUCT_ECHO)
+    Serial.printf("X:%f,Y:%f,Z%f,A%f\r\n", grblstatus->axis_Position[0], grblstatus->axis_Position[1], grblstatus->axis_Position[2], grblstatus->axis_Position[3]);
 #endif
 
     for (uint8_t i = 0; i < (grblstatus->nAxis); i++)
