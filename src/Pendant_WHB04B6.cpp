@@ -263,8 +263,13 @@ void Pendant_WHB04B6::on_key_press(uint8_t keycode)
                 break;
             case KEYCODE_M8_SPINDLEONOFF:
                 // Execute spindle toggle here
-                // if
+		SpindleToggle();
                 break;
+            case KEYCODE_M9_PROBEZ:
+		// Execute Probe Z here
+		
+
+		
 #if SERIALDEBUG > 0
             default:
                 Serial.print("Not function defined for key press: ");
@@ -368,7 +373,6 @@ void Pendant_WHB04B6::stop_continuous()
 
 void Pendant_WHB04B6::StartPauseButton()
 {
-    // Insert pause/start logic here
     switch (this->state)
     {
     case State::Cycle:
@@ -394,22 +398,26 @@ void Pendant_WHB04B6::StartPauseButton()
 
 void Pendant_WHB04B6::RunMacro(uint8_t MacroNumber)
 {
-    // New string to execute Macro associated with button press
-    String *cmd = new String(WHB04B6MacroRunCommand);
+	// Only run macro if controller is not executing something else
+    if ((this->state==State::Idle) || (this->state==State::Hold))
+    {
+	// New string to execute Macro associated with button press
+	String *cmd = new String(WHB04B6MacroRunCommand);
 
-    // Append macro number
-    cmd->concat(MacroNumber);
+	// Append macro number
+	cmd->concat(MacroNumber);
+	
+	// append extension if required
+	cmd->concat(".nc");
 
-    // append extension if required
-    cmd->concat(".nc");
+	// Echo
+	#if SERIALDEBUG > 0
+	    Serial.write(cmd->c_str());
+	#endif
 
-// Echo
-#if SERIALDEBUG > 0
-    Serial.write(cmd->c_str());
-#endif
-
-    this->send_command(cmd);
-}
+	this->send_command(cmd);
+        break;
+}	
 
 void Pendant_WHB04B6::SpindleToggle()
 {
@@ -438,3 +446,10 @@ void Pendant_WHB04B6::SpindleToggle()
         this->send_command(new String("M5"));
     }
 }
+
+void Pendant_WHB04B6::ProbeZ()
+{
+	// Only probe if controller is not executing something else
+    if ((this->state==State::Idle) || (this->state==State::Hold))
+    {
+	
