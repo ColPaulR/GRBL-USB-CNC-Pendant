@@ -1,0 +1,81 @@
+@var myToolsetterX = 1200
+@var myToolsetterY = 100
+@var mySafeZ = -40
+@var myRapidRate = 7500
+@var myFastProbe = 300
+@var myFineProbe = 10
+@var myMaxZProbe = 200
+@var mySavedX
+@var mySavedY
+@var mySavedZ
+@var myZSave
+@var myResult
+
+; force mm coordinates
+G21
+
+; Save current position in work coordinates
+%mySavedX% = #xw#
+%mySavedY% = #yw#
+%mySavedZ% = #zw#
+
+; rapid retract Z in machine coordinates
+G53 G0 Z%mySafeZ% F%myRapidRate%
+
+; rapid move to toolsetter position in machine coordinates
+G53 G0 X%myToolsetterX% Y%myToolsetterY% F%myRapidRate%
+
+; Adjust Z if needed
+; message{Jog Z near toolsetter height}
+
+; probe fast
+G38.2 F%myFastProbe% Z-%myMaxZProbe%
+
+; retract 
+G91 G0 Z2
+
+; probe slow
+G38.2 F%myFineProbe% Z-%myMaxZProbe%
+
+; now at tool's Z position; save Z work coordinate
+%myZSave% = #zw#
+
+; rapid retract Z
+G53 G0 Z0 F%myRapidRate%
+
+; Prompt for tool change
+:NudgeLoop
+%myResult% = message{ Move Z down 10mm relative? | Change to new tool if needed |0 |1}
+If{ %myResult% = NO | goto myProceed}
+G91 G0Z-10
+goto NudgeLoop
+
+; Keep going
+:myProceed
+
+; go to safe Z
+G53 G0 Z%mySafeZ% F%myRapidRate%
+
+; probe fast
+G38.2 F%myFastProbe% Z-%myMaxZProbe%
+
+; retract 
+G91 G0 Z2
+
+; probe slow
+G38.2 F%myFineProbe% Z-%myMaxZProbe%
+
+; reset Z height to last
+G92 Z%myZSave%
+
+; rapid retract Z
+G53 G0 Z%mySafeZ% F%myRapidRate%
+
+; force absolute moves
+G90
+
+; Go to starting XY
+G0 X%mySavedX% Y%mySavedY% F%myRapidRate%
+
+; Move to starting Z
+G0 Z%mySavedZ% F%myRapidRate%
