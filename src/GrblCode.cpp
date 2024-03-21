@@ -116,6 +116,66 @@ void show_gcode_modes(struct gcode_modes *modes)
         GrblStatus.flood = 1;
     }
 
+    // Inches or mm?
+    if (!strcmp(modes->units,"In"))
+    {
+        GrblStatus.isG21 = false;
+    }
+    if (!strcmp(modes->units,"mm"))
+    {
+        GrblStatus.isG21 = true;
+    }
+
+    // Relative or absolute
+    if (!strcmp(modes->distance,"Rel"))
+    {
+        GrblStatus.isG90 = false;
+    }
+    if (!strcmp(modes->distance,"Abs"))
+    {
+        GrblStatus.isG90 = true;
+    }
+
     // Send a newly allocated structure that is initialize with current status
     rp2040.fifo.push_nb((uint32_t) new GRBLSTATUS(GrblStatus));
 }
+
+void parse_report(char* line) 
+{
+
+    // Extract probe trigger position and success/failure flag for PRB messages
+    char* body;
+    if (is_report_type(_report, &body, "[PRB:", "]")) {
+        parse_probe_report(body);
+        return;
+    }
+}
+
+static void parse_probe_report(char* field)
+{
+    // The report wrapper, already removed, is [PRB:...]
+    // The body for [PRB:1095.000,105.000,-49.880,0.000:1] is, for example,
+    //   1095.000,105.000,-49.880,0.000:1
+
+    char *next;
+
+    size_t n_axis = 0;
+
+    // Separate position from success
+    if (!split(field, &next, '|'))
+	// Return if split fails
+	return;
+
+    // Process positon
+    n_axis = parse_axes(value, GrblStatus.axis_Probe);
+
+    // Process success flag
+    if (atoi(next))
+	GrblStatus.ProbeFlag=true;
+    else
+        GrblStatus.ProbeFlag = false;
+
+    // Send a newly allocated structure that is initialize with current status
+    rp2040.fifo.push_nb((uint32_t) new GRBLSTATUS(GrblStatus));
+}
+

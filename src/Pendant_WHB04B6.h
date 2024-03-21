@@ -71,6 +71,7 @@ private:
   void set_report();
   void double_to_report_bytes(double val, uint8_t idx_intval_lower, uint8_t idx_intval_upper, uint8_t idx_frac_lower, uint8_t idx_frac_upper);
   void uint16_to_report_bytes(uint16_t val, uint8_t idx_lower, uint8_t idx_upper);
+  bool isG90, isG21
   double axis_coordinates[6];
   uint8_t display_report_data[24];
   uint8_t report_packet_next = 0;
