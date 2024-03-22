@@ -25,7 +25,8 @@ struct GRBLSTATUS
   uint32_t spindle_speed;
   bool flood;
   bool mist;
-  bool ProbeFlag;
+  bool ProbeSuccessFlag;
+  bool NewProbeFlag = 0;
 };
 
 // From FluidNC/FluidNC/src/Types.h with "enum class" changed to "enum"

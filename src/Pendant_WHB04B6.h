@@ -71,8 +71,13 @@ private:
   void set_report();
   void double_to_report_bytes(double val, uint8_t idx_intval_lower, uint8_t idx_intval_upper, uint8_t idx_frac_lower, uint8_t idx_frac_upper);
   void uint16_to_report_bytes(uint16_t val, uint8_t idx_lower, uint8_t idx_upper);
-  bool isG90, isG21;
-  double axis_coordinates[6];
+  bool isG91, isG21;
+  bool savedG91, savedG21;
+  double axis_coordinates[MAX_N_AXIS];
+  double probe_coordinates[MAX_N_AXIS];
+  double saved_coordinates[MAX_N_AXIS];
+  double old_tool_z, new_tool_z;
+  uint8_t nAxis;
   uint8_t display_report_data[24];
   uint8_t report_packet_next = 0;
   uint8_t selected_axis, display_axis_offset, selected_feed, spindle;
@@ -85,11 +90,13 @@ private:
   void handle_continuous_check();
   void handle_continuous_update();
   void stop_continuous();
+  void StopButton();
   void StartPauseButton();
   void RunMacro(uint8_t MacroNumber);
   void SpindleToggle();
   void ProbeZ();
-
+  void EndProbeZ();
+  void ProbeZNext();
 
   uint8_t continuous_axis = 0;
   bool continuous_direction;
@@ -101,6 +108,13 @@ private:
     Step = 0,
     Continuous
   } mode = Mode::Step;
+
+  enum class ProbeState : uint8_t
+  {
+    NoProbe = 0,   // Must be zero.
+    ProbeExisting, // Moving to probe location or awaiting Start/Pause button press to probe existing tool
+    ProbeNew       // Probing existing tool, retracting to safe Z or awaiting Start/Pause button press to probe new tool
+  } probe_state = ProbeState::NoProbe;
 };
 
 const uint16_t WHB04B6ContinuousFeeds[] = {6000, 6000, 6000, 6000, 6000, 6000};
@@ -132,5 +146,11 @@ const uint16_t WHB04B6FeedRateStep[] =
 const char WHB04B6ContinuousRunCommand[] = "M98 P\"pendant-continuous-run.g\" A\"%c\" F%u D%u";
 const char WHB04B6ContinuousStopCommand[] = "\x85";
 const char WHB04B6MacroRunCommand[] = "$LocalFS/Run=P_Macro";
+const char CMD_SAFE_Z[] = "G53G0Z0";
+const char CMD_MOVE_M_COORD[] = "G53G0";
+const char CMD_GOTO_PROBE_XY[] = "G53G91X0Y0";
+const char CMD_FAST_PROBE[] = "G38.2Z-200F300";
+const char CMD_PROBE_LIFT[] = "$J=G91Z-5";
+const char CMD_SLOW_PROBE[] = "G38.2Z-200F75";
 // const char WHB04B6MacroRunCommand[] = "$RM=";
 #endif

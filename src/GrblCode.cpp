@@ -79,22 +79,17 @@ void show_probe(const pos_t *axes, const bool probe_success, size_t n_axis)
     }
 
     // Process success flag
-    GrblStatus.ProbeFlag = probe_success;
+    GrblStatus.ProbeSuccessFlag = probe_success;
+
+    // Allocate new structure and copy
+    GRBLSTATUS *tempStatus = new GRBLSTATUS(GrblStatus);
+
+    // Set flag to indicate G38 completed. Leave static copy of structure as no new probe flag
+    tempStatus->NewProbeFlag = true;
 
     // Send a newly allocated structure that is initialize with current status
-    rp2040.fifo.push_nb((uint32_t) new GRBLSTATUS(GrblStatus));
+    rp2040.fifo.push_nb((uint32_t) tempStatus);
 }
-
-// void  show_overrides(override_percent_t feed_ovr, override_percent_t rapid_ovr, override_percent_t spindle_ovr) {}
-// [GC: messages
-// void  show_gcode_modes(struct gcode_modes* modes) {}
-
-// Called before and after parsing a status report; useful for
-// clearing and updating display screens
-// void begin_status_report()
-// {
-//     GrblStatus = new GRBLSTATUS;
-// }
 
 void end_status_report()
 {

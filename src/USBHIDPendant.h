@@ -26,6 +26,7 @@ public:
 protected:
   void set_report(uint8_t report_id, uint8_t report_type, void* report, uint16_t len);
   void send_command(String * cmd);
+  void send_command(const char cCmd[]);
   void process_keycodes(const uint8_t *keycodes, uint8_t len);
   bool is_key_pressed(uint8_t keycode);
   virtual void on_key_press(uint8_t keycode){}

@@ -158,6 +158,8 @@ void Pendant_WHB04B6::loop()
     if ((now - last_cmd_check) > CMD_STEP_INTERVAL)
     {
         last_cmd_check = now;
+
+        // Process any jog actions needed
         uint8_t feed = FEEDSELECTOR_TO_LINEAR(this->selected_feed);
         if (this->mode == Mode::Step && this->jog != 0 && this->selected_axis >= AXISSELCTOR_X && this->selected_axis <= AXISSELCTOR_C && feed && feed <= FEEDSELECTOR_STEP_STEPS)
         {
@@ -176,7 +178,7 @@ void Pendant_WHB04B6::loop()
             cmd->concat("F");
             cmd->concat(WHB04B6ContinuousFeeds[axis]);
 
-#if SERIALDEBUG > 1
+#if GRBL_JOG_CMD_ECHO > 1
             Serial.write(cmd->c_str());
 #endif
 
@@ -184,6 +186,7 @@ void Pendant_WHB04B6::loop()
             this->jog = 0;
         }
     }
+
     // if (this->mode == Mode::Continuous)
     // {
     //     if ((now - last_continuous_check) > CMD_CONTINUOUS_CHECK_INTERVAL)
@@ -196,6 +199,7 @@ void Pendant_WHB04B6::loop()
     //     }
     // }
 
+    // Updated display if required
     if ((now - this->last_display_report) > REPORT_INTERVAL)
     {
         this->send_display_report();
@@ -214,20 +218,20 @@ void Pendant_WHB04B6::on_key_press(uint8_t keycode)
     switch (keycode)
     {
     case KEYCODE_RESET:
+        // Soft Reset
         this->send_command(new String("$Bye"));
         break;
     case KEYCODE_STOP:
-        // hold
-        this->send_command(new String("\x18"));
+        StopButton();
         break;
     case KEYCODE_STARTPAUSE:
         StartPauseButton();
         break;
     case KEYCODE_CONTINUOUS:
-        this->jog = 0;
-        this->mode = Mode::Continuous;
-        this->last_continuous_check = millis();
-        break;
+        // this->jog = 0;
+        // this->mode = Mode::Continuous;
+        // this->last_continuous_check = millis();
+        // break;
     case KEYCODE_STEP:
         this->jog = 0;
         this->stop_continuous();
@@ -254,7 +258,7 @@ void Pendant_WHB04B6::on_key_press(uint8_t keycode)
                 this->send_command(new String("$H"));
                 break;
             case KEYCODE_M6_SAFEZ:
-                this->send_command(new String("G53G0Z0"));
+                this->send_command(new String(CMD_SAFE_Z));
                 break;
             case KEYCODE_M7_WHOME:
                 // Set work home here ; do not set/reset Z
@@ -266,6 +270,7 @@ void Pendant_WHB04B6::on_key_press(uint8_t keycode)
                 break;
             case KEYCODE_M9_PROBEZ:
                 // Execute Probe Z here
+                ProbeZ();
                 break;
 #if SERIALDEBUG > 0
             default:
@@ -304,10 +309,28 @@ void Pendant_WHB04B6::on_key_release(uint8_t keycode)
 
 void Pendant_WHB04B6::grblstatus_received(GRBLSTATUS *grblstatus)
 {
-#if (GRBLSTATUS_STRUCT_ECHO)
+    // Save number of axis currently reported. Expecting nAxis < MAX_N_AXIS
+    this->nAxis = grblstatus->nAxis;
+
+#if (GRBLSTATUS_AXIS_ECHO)
     Serial.printf("X:%f,Y:%f,Z%f,A%f\r\n", grblstatus->axis_Position[0], grblstatus->axis_Position[1], grblstatus->axis_Position[2], grblstatus->axis_Position[3]);
 #endif
+    // Copy current position
+    for (uint8_t i = 0; i < (grblstatus->nAxis); i++)
+        this->axis_coordinates[i] = grblstatus->axis_Position[i];
 
+    if ((grblstatus->NewProbeFlag) && (this->probe_state != ProbeState::NoProbe))
+    {
+        // If probing failed, clean up
+        if (!grblstatus->ProbeSuccessFlag)
+            EndProbeZ();
+        else {
+            // Actively probing and have new probe position
+
+        }   
+    }
+    
+    // Copy  position
     for (uint8_t i = 0; i < (grblstatus->nAxis); i++)
         this->axis_coordinates[i] = grblstatus->axis_Position[i];
 
@@ -324,6 +347,14 @@ void Pendant_WHB04B6::grblstatus_received(GRBLSTATUS *grblstatus)
 
     // Save spindle enumeration
     this->state = grblstatus->spindle;
+
+#if (G91_PROCESSED_ECHO)
+    Serial.println(grblstatus->isG91 ? "G91 Rel" : "G90 Abs");
+#endif
+
+#if (G21_PROCESSED_ECHO)
+    Serial.println(grblstatus->isG21 ? "G21 mm" : "G20 inches");
+#endif
 
     this->send_display_report();
 }
@@ -386,6 +417,11 @@ void Pendant_WHB04B6::StartPauseButton()
         // clear alarm
         this->send_command(new String("$x"));
         break;
+    case State::Idle:
+        // Awaiting user input/not running any other actions. ProbeState::NoProbe = 0
+        if (this->probe_state != ProbeState::NoProbe)
+        {
+        }
 #if SERIALDEBUG > 0
     default:
         Serial.printf("Pause/run in GRBL State: %d not defined\r\n", this->state);
@@ -393,6 +429,25 @@ void Pendant_WHB04B6::StartPauseButton()
     }
 }
 
+void Pendant_WHB04B6::StopButton()
+{
+    switch (this->state)
+    {
+    case State::Cycle:
+    case State::Jog:
+        // Stop
+        this->send_command(new String("!"));
+        break;
+    case State::Homing:
+        // Soft Reset
+        this->send_command(new String("0x18"));
+        break;
+#if SERIALDEBUG > 0
+    default:
+        Serial.printf("Stop Button in GRBL State: %d not defined\r\n", this->state);
+#endif
+    }
+}
 void Pendant_WHB04B6::RunMacro(uint8_t MacroNumber)
 {
     // Only run macro if controller is not executing something else
@@ -449,6 +504,72 @@ void Pendant_WHB04B6::ProbeZ()
     // Only probe if controller is not executing something else
     if ((this->state == State::Idle) || (this->state == State::Hold))
     {
-        // Insert probe actions here
+        // Start probing
+        this->probe_state = ProbeState::ProbeExisting;
+
+        // Save coordinates
+        memcpy(this->saved_coordinates, this->axis_coordinates, this->nAxis * sizeof(double));
+
+        // Save modal states
+        this->savedG21 = this->isG21;
+        this->savedG91 = this->isG91;
+
+        // Switch to relative move mode if required
+        if (!this->savedG91)
+            this->send_command("G91");
+
+        // Switch to mm if required
+        if (!this->savedG21)
+            this->send_command("G21");
+
+        // Raise Z to safe move height
+        this->send_command(CMD_SAFE_Z);
+
+        // Goto probe position saved in G30
+        this->send_command(CMD_GOTO_PROBE_XY);
+    }
+}
+
+void Pendant_WHB04B6::EndProbeZ()
+{
+    // ProbeState::NoProbe = 0
+    if (this->probe_state != ProbeState::NoProbe)
+    {
+        // Currently probing. Raise Z to safe move height
+        this->send_command(CMD_SAFE_Z);
+
+        // Goto position saved at start of probe. Assume default feedrate
+        String *cmd = new String(CMD_MOVE_M_COORD);
+        for (int i = 0; i < this->nAxis; i++)
+        {
+            cmd->concat(WHB04B6AxisLetters[i]);
+            cmd->concat(this->saved_coordinates[i]);
+        }
+        this->send_command(cmd);
+
+        // Switch G90/G91 if required
+        if (this->isG91 != this->savedG91)
+            this->send_command((this->savedG91 ? "G91" : "G90"));
+
+        // Switch G20/G21 if required
+        if (this->isG21 != this->savedG21)
+            this->send_command((this->savedG21 ? "G21" : "G20"));
+
+        // Done with probing. Set state to NOPROBE
+        this->probe_state = ProbeState::NoProbe;
+    }
+}
+
+void Pendant_WHB04B6::ProbeZNext()
+{
+    switch (this->probe_state)
+    {
+    case ProbeState::ProbeExisting:
+        // User pressed Start/Pause button after moving to probe position
+        this->send_command(CMD_FAST_PROBE);
+        this->send_command(CMD_PROBE_LIFT);
+        this->send_command(CMD_SLOW_PROBE);
+        this->send_command(CMD_SAFE_Z);
+                    break;
     }
 }

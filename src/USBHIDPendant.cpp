@@ -58,3 +58,10 @@ void USBHIDPendant::send_command(String * cmd)
   cmd->concat("\n");
   rp2040.fifo.push_nb((uint32_t)cmd);
 }
+
+void USBHIDPendant::send_command(const char cCmd[])
+{
+  String *cmd = new String(cCmd);
+  cmd->concat("\n");
+  rp2040.fifo.push_nb((uint32_t)cmd);
+}
