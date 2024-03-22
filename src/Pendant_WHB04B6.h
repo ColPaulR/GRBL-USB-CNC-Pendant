@@ -111,9 +111,14 @@ private:
 
   enum class ProbeState : uint8_t
   {
-    NoProbe = 0,   // Must be zero.
-    ProbeExisting, // Moving to probe location or awaiting Start/Pause button press to probe existing tool
-    ProbeNew       // Probing existing tool, retracting to safe Z or awaiting Start/Pause button press to probe new tool
+    NoProbe,                // Not probing
+    MoveToProbeLocation,    // Moving to probe location and awaiting Start/Pause button press to probe existing tool
+    ProbeExistingCoarse,    // Coarse probing existing and waiting on probe to complete
+    ProbeExistingFine,      // Find probing existing and waiting on probe to complete
+    ProbeExistingComplete,  // Move to safe Z and wait for toolchange to complete and user to continue
+    ProbeNewCoarse,         // Coarse probing existing and waiting on probe to complete
+    ProbeNewFine,           // Find probing existing and waiting on probe to complete
+    FinishProbing           // Adjust tool coordinates and cleanup
   } probe_state = ProbeState::NoProbe;
 };
 
