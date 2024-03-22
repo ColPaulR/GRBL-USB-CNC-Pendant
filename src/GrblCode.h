@@ -4,6 +4,8 @@
 #include "GrblParserC.h"
 
 #define MAX_STATUS_LEN 10
+extern bool is_report_type(char* , char** , const char* , const char*);
+extern size_t parse_axes(char*, pos_t*);
 
 void PrintGrblStatusMsg(struct GRBLSTATUS *GrblStatus);
 
@@ -16,6 +18,8 @@ struct GRBLSTATUS
   double axis_Probe[MAX_N_AXIS];
   // ignore axis_WCO for now as it is not currently used
   // double    axis_WCO[MAX_N_AXIS];
+  bool isG90;
+  bool isG21;
   uint32_t feedrate;
   int spindle;
   uint32_t spindle_speed;

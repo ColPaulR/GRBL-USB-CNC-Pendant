@@ -4,8 +4,7 @@
 // For Reference:
 // https://github.com/LinuxCNC/linuxcnc/tree/master/src/hal/user_comps/xhc-WHB04B6
 
-Pendant_WHB04B6::Pendant_WHB04B6(uint8_t dev_addr, uint8_t instance) : 
-	USBHIDPendant(dev_addr, instance),
+Pendant_WHB04B6::Pendant_WHB04B6(uint8_t dev_addr, uint8_t instance) : USBHIDPendant(dev_addr, instance),
                                                                        axis_coordinates{0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
                                                                        display_report_data{0x06, 0xfe, 0xfd, SEED, 0x81, 0x00, 0x00, 0x00,
                                                                                            0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -100,7 +99,7 @@ void Pendant_WHB04B6::uint16_to_report_bytes(uint16_t val, uint8_t idx_lower, ui
 
 void Pendant_WHB04B6::send_display_report()
 {
-    if(this->report_packet_next>0)
+    if (this->report_packet_next > 0)
         return; // sending already in progress
 
     this->last_display_report = millis();
@@ -127,13 +126,13 @@ void Pendant_WHB04B6::send_display_report()
     else
         // Set work coordiantes bit
         this->display_report_data[R_IDX(3)] = (this->display_report_data[R_IDX(3)] | 0x80);
-// send first packet of display report data to device
+    // send first packet of display report data to device
     this->set_report();
 }
 
 void Pendant_WHB04B6::set_report()
 {
-    if(this->report_packet_next>=REPORT_PACKET_COUNT)
+    if (this->report_packet_next >= REPORT_PACKET_COUNT)
     {
         // all packets sent
         this->report_packet_next = 0;
@@ -144,9 +143,9 @@ void Pendant_WHB04B6::set_report()
 
 void Pendant_WHB04B6::set_report_complete(uint8_t report_id, uint8_t report_type, uint16_t len)
 {
-    if(report_id!=0x06) // wrong report id?
+    if (report_id != 0x06) // wrong report id?
         return;
-    if(len!=8) // send failed ?
+    if (len != 8) // send failed ?
         this->report_packet_next = 0;
     else
         this->set_report(); // send next packet
@@ -263,13 +262,11 @@ void Pendant_WHB04B6::on_key_press(uint8_t keycode)
                 break;
             case KEYCODE_M8_SPINDLEONOFF:
                 // Execute spindle toggle here
-		SpindleToggle();
+                SpindleToggle();
                 break;
             case KEYCODE_M9_PROBEZ:
-		// Execute Probe Z here
-		
-
-		
+                // Execute Probe Z here
+                break;
 #if SERIALDEBUG > 0
             default:
                 Serial.print("Not function defined for key press: ");
@@ -398,26 +395,26 @@ void Pendant_WHB04B6::StartPauseButton()
 
 void Pendant_WHB04B6::RunMacro(uint8_t MacroNumber)
 {
-	// Only run macro if controller is not executing something else
-    if ((this->state==State::Idle) || (this->state==State::Hold))
+    // Only run macro if controller is not executing something else
+    if ((this->state == State::Idle) || (this->state == State::Hold))
     {
-	// New string to execute Macro associated with button press
-	String *cmd = new String(WHB04B6MacroRunCommand);
+        // New string to execute Macro associated with button press
+        String *cmd = new String(WHB04B6MacroRunCommand);
 
-	// Append macro number
-	cmd->concat(MacroNumber);
-	
-	// append extension if required
-	cmd->concat(".nc");
+        // Append macro number
+        cmd->concat(MacroNumber);
 
-	// Echo
-	#if SERIALDEBUG > 0
-	    Serial.write(cmd->c_str());
-	#endif
+        // append extension if required
+        cmd->concat(".nc");
 
-	this->send_command(cmd);
-        break;
-}	
+// Echo
+#if SERIALDEBUG > 0
+        Serial.write(cmd->c_str());
+#endif
+
+        this->send_command(cmd);
+    }
+}
 
 void Pendant_WHB04B6::SpindleToggle()
 {
@@ -449,7 +446,9 @@ void Pendant_WHB04B6::SpindleToggle()
 
 void Pendant_WHB04B6::ProbeZ()
 {
-	// Only probe if controller is not executing something else
-    if ((this->state==State::Idle) || (this->state==State::Hold))
+    // Only probe if controller is not executing something else
+    if ((this->state == State::Idle) || (this->state == State::Hold))
     {
-	
+        // Insert probe actions here
+    }
+}

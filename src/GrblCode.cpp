@@ -71,6 +71,20 @@ void show_spindle_coolant(int spindle, bool flood, bool mist)
     GrblStatus.mist = mist;
 }
 
+void show_probe(const pos_t *axes, const bool probe_success, size_t n_axis)
+{
+    for (int i = 0; i < n_axis; i++)
+    {
+        GrblStatus.axis_Probe[i] = axes[i];
+    }
+
+    // Process success flag
+    GrblStatus.ProbeFlag = probe_success;
+
+    // Send a newly allocated structure that is initialize with current status
+    rp2040.fifo.push_nb((uint32_t) new GRBLSTATUS(GrblStatus));
+}
+
 // void  show_overrides(override_percent_t feed_ovr, override_percent_t rapid_ovr, override_percent_t spindle_ovr) {}
 // [GC: messages
 // void  show_gcode_modes(struct gcode_modes* modes) {}
@@ -117,21 +131,21 @@ void show_gcode_modes(struct gcode_modes *modes)
     }
 
     // Inches or mm?
-    if (!strcmp(modes->units,"In"))
+    if (!strcmp(modes->units, "In"))
     {
         GrblStatus.isG21 = false;
     }
-    if (!strcmp(modes->units,"mm"))
+    if (!strcmp(modes->units, "mm"))
     {
         GrblStatus.isG21 = true;
     }
 
     // Relative or absolute
-    if (!strcmp(modes->distance,"Rel"))
+    if (!strcmp(modes->distance, "Rel"))
     {
         GrblStatus.isG90 = false;
     }
-    if (!strcmp(modes->distance,"Abs"))
+    if (!strcmp(modes->distance, "Abs"))
     {
         GrblStatus.isG90 = true;
     }
@@ -140,42 +154,36 @@ void show_gcode_modes(struct gcode_modes *modes)
     rp2040.fifo.push_nb((uint32_t) new GRBLSTATUS(GrblStatus));
 }
 
-void parse_report(char* line) 
-{
+// void  handle_other(char *field)
+// // static void parse_probe_report(char *field)
+// {
+//     // The report wrapper, already removed, is [PRB:...]
+//     // The body for [PRB:1095.000,105.000,-49.880,0.000:1] is, for example,
+//     //   1095.000,105.000,-49.880,0.000:1
 
-    // Extract probe trigger position and success/failure flag for PRB messages
-    char* body;
-    if (is_report_type(_report, &body, "[PRB:", "]")) {
-        parse_probe_report(body);
-        return;
-    }
-}
+//     char *next;
 
-static void parse_probe_report(char* field)
-{
-    // The report wrapper, already removed, is [PRB:...]
-    // The body for [PRB:1095.000,105.000,-49.880,0.000:1] is, for example,
-    //   1095.000,105.000,-49.880,0.000:1
+//     size_t n_axis = 0;
+//     pos_t axes[MAX_N_AXIS];
 
-    char *next;
+//     // Separate position from success
+//     if (!split(field, &next, '|'))
+//         // Return if split fails
+//         return;
 
-    size_t n_axis = 0;
+//     // Process positon
+//     n_axis = parse_axes(field, axes);
 
-    // Separate position from success
-    if (!split(field, &next, '|'))
-	// Return if split fails
-	return;
+//  for (int i = 0; i < n_axis; i++)
+//     {
+//         GrblStatus.axis_Probe[i] = axes[i];
+//     }
 
-    // Process positon
-    n_axis = parse_axes(value, GrblStatus.axis_Probe);
+//     // Process success flag
+//     GrblStatus.ProbeFlag = false;
+//     if (*next == '1')
+//         GrblStatus.ProbeFlag = true;
 
-    // Process success flag
-    if (atoi(next))
-	GrblStatus.ProbeFlag=true;
-    else
-        GrblStatus.ProbeFlag = false;
-
-    // Send a newly allocated structure that is initialize with current status
-    rp2040.fifo.push_nb((uint32_t) new GRBLSTATUS(GrblStatus));
-}
-
+//     // Send a newly allocated structure that is initialize with current status
+//     rp2040.fifo.push_nb((uint32_t) new GRBLSTATUS(GrblStatus));
+// }
