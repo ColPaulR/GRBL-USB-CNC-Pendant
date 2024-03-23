@@ -138,11 +138,11 @@ void show_gcode_modes(struct gcode_modes *modes)
     // Relative or absolute
     if (!strcmp(modes->distance, "Rel"))
     {
-        GrblStatus.isG90 = false;
+        GrblStatus.isG91 = false;
     }
     if (!strcmp(modes->distance, "Abs"))
     {
-        GrblStatus.isG90 = true;
+        GrblStatus.isG91 = true;
     }
 
     // Send a newly allocated structure that is initialize with current status

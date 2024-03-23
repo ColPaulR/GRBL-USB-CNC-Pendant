@@ -1,12 +1,12 @@
 #include "Pendant_WHB04B6.h"
 #include "SerialDebug.h"
-
 // For Reference:
 // https://github.com/LinuxCNC/linuxcnc/tree/master/src/hal/user_comps/xhc-WHB04B6
 
 Pendant_WHB04B6::Pendant_WHB04B6(uint8_t dev_addr, uint8_t instance) : USBHIDPendant(dev_addr, instance),
                                                                        axis_coordinates{0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
                                                                        display_report_data{0x06, 0xfe, 0xfd, SEED, 0x81, 0x00, 0x00, 0x00,
+
                                                                                            0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                                                                            0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
                                                                        jog(0),
@@ -270,7 +270,8 @@ void Pendant_WHB04B6::on_key_press(uint8_t keycode)
                 break;
             case KEYCODE_M9_PROBEZ:
                 // Execute Probe Z here
-                ProbeZ();
+                if (this->probe_state == ProbeState::NoProbe)
+                    ProbeZ();
                 break;
 #if SERIALDEBUG > 0
             default:
@@ -319,21 +320,6 @@ void Pendant_WHB04B6::grblstatus_received(GRBLSTATUS *grblstatus)
     for (uint8_t i = 0; i < (grblstatus->nAxis); i++)
         this->axis_coordinates[i] = grblstatus->axis_Position[i];
 
-    if ((grblstatus->NewProbeFlag) && (this->probe_state != ProbeState::NoProbe))
-    {
-        // If probing failed, clean up
-        if (!grblstatus->ProbeSuccessFlag)
-            EndProbeZ();
-        else {
-            // Actively probing and have new probe position
-
-        }   
-    }
-    
-    // Copy  position
-    for (uint8_t i = 0; i < (grblstatus->nAxis); i++)
-        this->axis_coordinates[i] = grblstatus->axis_Position[i];
-
     this->uint16_to_report_bytes(grblstatus->spindle_speed, 18, 19);
 
     // Indicate coordinates on pendant as machine or work. Work appends "1" to axis name
@@ -348,17 +334,58 @@ void Pendant_WHB04B6::grblstatus_received(GRBLSTATUS *grblstatus)
     // Save spindle enumeration
     this->state = grblstatus->spindle;
 
+    // Save relative/absolute
+    this->isG91=grblstatus->isG91;
 #if (G91_PROCESSED_ECHO)
     Serial.println(grblstatus->isG91 ? "G91 Rel" : "G90 Abs");
 #endif
 
+    // Save units
+    this->isG21=grblstatus->isG21;
 #if (G21_PROCESSED_ECHO)
     Serial.println(grblstatus->isG21 ? "G21 mm" : "G20 inches");
 #endif
 
     this->send_display_report();
+    // Only process probe data if the new data flag is set (should be 1 time event per G38 command)
+    if (grblstatus->NewProbeFlag)
+    {
+#if (PROBE_STATUS_ECHO)
+        Serial.println("New probe status received");
+#endif
+        if (!grblstatus->ProbeSuccessFlag)
+        {
+            // Figure out what to do if the probing fails during exisitng tool coarse probe
+#if (PROBE_STATUS_ECHO)
+            Serial.println("Failed probe reported");
+#endif
+        }
+        else
+        {
+            switch (this->probe_state)
+            {
+            case ProbeState::ProbeExistingFine:
+                // Fine existing tool successfully completed probing
+                // Save probe Z value
+                this->existing_tool_z = grblstatus->axis_Probe[2];
+                ProbeZ();
+                break;
+            case ProbeState::ProbeNewFine:
+                // Fine existing tool successfully completed probing
+                // Save probe Z value
+                this->new_tool_z = grblstatus->axis_Probe[2];
+                ProbeZ();
+                break;
+            case ProbeState::ProbeNewCoarse:
+            case ProbeState::ProbeExistingCoarse:
+                ProbeZ();
+                break;
+                // default:
+                // Unexpected probe response not triggered by pendant. Ignore
+            }
+        }
+    }
 }
-
 void Pendant_WHB04B6::handle_continuous_check()
 {
     this->last_continuous_check = millis();
@@ -398,7 +425,6 @@ void Pendant_WHB04B6::stop_continuous()
         this->continuous_axis = 0;
     }
 }
-
 void Pendant_WHB04B6::StartPauseButton()
 {
     switch (this->state)
@@ -418,9 +444,14 @@ void Pendant_WHB04B6::StartPauseButton()
         this->send_command(new String("$x"));
         break;
     case State::Idle:
-        // Awaiting user input/not running any other actions. ProbeState::NoProbe = 0
-        if (this->probe_state != ProbeState::NoProbe)
+        // Awaiting user input/not running any other actions
+        switch (this->probe_state)
         {
+        case ProbeState::MovedToProbeLocation:
+        case ProbeState::ProbeExistingComplete:
+            // Probing is awaiting button press
+            ProbeZ();
+            break;
         }
 #if SERIALDEBUG > 0
     default:
@@ -428,12 +459,17 @@ void Pendant_WHB04B6::StartPauseButton()
 #endif
     }
 }
-
 void Pendant_WHB04B6::StopButton()
 {
     switch (this->state)
     {
     case State::Cycle:
+        // Stop
+        this->send_command(new String("!"));
+        // If probing, stop probing and cleanup
+        if (this->probe_state != ProbeState::NoProbe)
+            EndProbeZ();
+        break;
     case State::Jog:
         // Stop
         this->send_command(new String("!"));
@@ -463,14 +499,13 @@ void Pendant_WHB04B6::RunMacro(uint8_t MacroNumber)
         cmd->concat(".nc");
 
 // Echo
-#if SERIALDEBUG > 0
+#if MACRO_EXEC_ECHO > 0
         Serial.write(cmd->c_str());
 #endif
 
         this->send_command(cmd);
     }
 }
-
 void Pendant_WHB04B6::SpindleToggle()
 {
     if (this->spindle == 0)
@@ -498,41 +533,91 @@ void Pendant_WHB04B6::SpindleToggle()
         this->send_command(new String("M5"));
     }
 }
-
 void Pendant_WHB04B6::ProbeZ()
 {
-    // Only probe if controller is not executing something else
-    if ((this->state == State::Idle) || (this->state == State::Hold))
+#if (PROBE_STATE_ECHO)
+    Serial.printf("Probe State was: %d", this->probe_state);
+#endif
+    switch (this->probe_state)
     {
-        // Start probing
-        this->probe_state = ProbeState::ProbeExisting;
+    case ProbeState::NoProbe:
+        // Only probe if controller is not executing something else
+        // Entered this state by ProbeZ button press
+        if ((this->state == State::Idle) || (this->state == State::Hold))
+        {
+            // Start probing
+            // Save coordinates
+            memcpy(this->saved_coordinates, this->axis_coordinates, this->nAxis * sizeof(double));
 
-        // Save coordinates
-        memcpy(this->saved_coordinates, this->axis_coordinates, this->nAxis * sizeof(double));
+            // Save modal states
+            this->savedG21 = this->isG21;
+            this->savedG91 = this->isG91;
 
-        // Save modal states
-        this->savedG21 = this->isG21;
-        this->savedG91 = this->isG91;
+            // Switch to relative move mode if required
+            if (!this->savedG91)
+                this->send_command("G91");
 
-        // Switch to relative move mode if required
-        if (!this->savedG91)
-            this->send_command("G91");
+            // Switch to mm if required
+            if (!this->savedG21)
+                this->send_command("G21");
 
-        // Switch to mm if required
-        if (!this->savedG21)
-            this->send_command("G21");
+            // Raise Z to safe move height
+            this->send_command(CMD_SAFE_Z);
 
-        // Raise Z to safe move height
+            // Goto probe position saved in G30
+            this->send_command(CMD_GOTO_PROBE_XY);
+
+            // Wait for start/pause key press
+            this->probe_state = ProbeState::MovedToProbeLocation;
+            break;
+        }
+    case ProbeState::MovedToProbeLocation:
+        // User pressed Start/Pause button after moving to probe position
+        this->probe_state = ProbeState::ProbeExistingCoarse;
+        this->send_command(CMD_FAST_PROBE);
+        break;
+    case ProbeState::ProbeExistingCoarse:
+        // Probe has completed existing coarse probe
+        this->probe_state = ProbeState::ProbeExistingFine;
+        this->send_command(CMD_PROBE_LIFT);
+        this->send_command(CMD_SLOW_PROBE);
+        break;
+    case ProbeState::ProbeExistingFine:
+        // Probe has completed existing probe
         this->send_command(CMD_SAFE_Z);
+        break;
+    case ProbeState::ProbeExistingComplete:
+        // User pressed Start/Pause button after moving to probe position
+        this->probe_state = ProbeState::ProbeNewCoarse;
+        this->send_command(CMD_FAST_PROBE);
+        break;
+    case ProbeState::ProbeNewCoarse:
+        // Probe has completed existing coarse probe
+        this->probe_state = ProbeState::ProbeNewFine;
+        this->send_command(CMD_PROBE_LIFT);
+        this->send_command(CMD_SLOW_PROBE);
+        break;
+    case ProbeState::ProbeNewFine:
+        // Probe has completed new probe
+        // Move Z to the location of the probe trigger/remove overshoot
+        String *cmd = new String(CMD_MOVE_M_COORD);
+        cmd->concat("Z");
+        cmd->concat(this->new_tool_z);
+        this->send_command(cmd);
 
-        // Goto probe position saved in G30
-        this->send_command(CMD_GOTO_PROBE_XY);
+        // *************** Do something here *********************
+        // Send current Z to this->old_tool_z
+        // Uncomment cleanup when satisfied with height resetting
+        // EndProbeZ();
+        // *************** Do something here *********************
     }
+#if (PROBE_STATE_ECHO)
+    Serial.printf(" is: %d\r\n", this->probe_state);
+#endif
 }
-
 void Pendant_WHB04B6::EndProbeZ()
 {
-    // ProbeState::NoProbe = 0
+    // Don't take any action unless there is a probe in progress
     if (this->probe_state != ProbeState::NoProbe)
     {
         // Currently probing. Raise Z to safe move height
@@ -557,19 +642,5 @@ void Pendant_WHB04B6::EndProbeZ()
 
         // Done with probing. Set state to NOPROBE
         this->probe_state = ProbeState::NoProbe;
-    }
-}
-
-void Pendant_WHB04B6::ProbeZNext()
-{
-    switch (this->probe_state)
-    {
-    case ProbeState::ProbeExisting:
-        // User pressed Start/Pause button after moving to probe position
-        this->send_command(CMD_FAST_PROBE);
-        this->send_command(CMD_PROBE_LIFT);
-        this->send_command(CMD_SLOW_PROBE);
-        this->send_command(CMD_SAFE_Z);
-                    break;
     }
 }

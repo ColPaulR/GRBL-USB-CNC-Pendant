@@ -76,7 +76,7 @@ private:
   double axis_coordinates[MAX_N_AXIS];
   double probe_coordinates[MAX_N_AXIS];
   double saved_coordinates[MAX_N_AXIS];
-  double old_tool_z, new_tool_z;
+  double existing_tool_z, new_tool_z;
   uint8_t nAxis;
   uint8_t display_report_data[24];
   uint8_t report_packet_next = 0;
@@ -112,13 +112,12 @@ private:
   enum class ProbeState : uint8_t
   {
     NoProbe,                // Not probing
-    MoveToProbeLocation,    // Moving to probe location and awaiting Start/Pause button press to probe existing tool
+    MovedToProbeLocation,   // Moving to probe location and awaiting Start/Pause button press to probe existing tool
     ProbeExistingCoarse,    // Coarse probing existing and waiting on probe to complete
     ProbeExistingFine,      // Find probing existing and waiting on probe to complete
     ProbeExistingComplete,  // Move to safe Z and wait for toolchange to complete and user to continue
     ProbeNewCoarse,         // Coarse probing existing and waiting on probe to complete
-    ProbeNewFine,           // Find probing existing and waiting on probe to complete
-    FinishProbing           // Adjust tool coordinates and cleanup
+    ProbeNewFine           // Find probing existing and waiting on probe to complete
   } probe_state = ProbeState::NoProbe;
 };
 
