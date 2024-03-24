@@ -74,6 +74,7 @@ private:
   bool isG91, isG21;
   bool savedG91, savedG21;
   double axis_coordinates[MAX_N_AXIS];
+  double wco_coordinates[MAX_N_AXIS];
   double probe_coordinates[MAX_N_AXIS];
   double saved_coordinates[MAX_N_AXIS];
   double existing_tool_z, new_tool_z;
@@ -147,6 +148,9 @@ const uint16_t WHB04B6FeedRateStep[] =
         500  // axis 6
 };
 
+// use the Z axis, 3rd (index = 2) coordinate for probing
+#define PROBE_AXIS 2
+#define PROBE_AXIS_CHAR Z
 const char WHB04B6ContinuousRunCommand[] = "M98 P\"pendant-continuous-run.g\" A\"%c\" F%u D%u";
 const char WHB04B6ContinuousStopCommand[] = "\x85";
 const char WHB04B6MacroRunCommand[] = "$LocalFS/Run=P_Macro";
@@ -156,5 +160,7 @@ const char CMD_GOTO_PROBE_XY[] = "G30G91X0Y0";
 const char CMD_FAST_PROBE[] = "G53G38.2Z-200F300";
 const char CMD_PROBE_LIFT[] = "$J=G91Z2F6000";
 const char CMD_SLOW_PROBE[] = "G53G38.2Z-200F75";
+const char CMD_RESET_Z[] = "G10L2P0Z";
+
 // const char WHB04B6MacroRunCommand[] = "$RM=";
 #endif

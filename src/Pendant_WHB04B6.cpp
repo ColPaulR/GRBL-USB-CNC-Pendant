@@ -325,7 +325,10 @@ void Pendant_WHB04B6::grblstatus_received(GRBLSTATUS *grblstatus)
 #endif
     // Copy current position
     for (uint8_t i = 0; i < (grblstatus->nAxis); i++)
+    {
         this->axis_coordinates[i] = grblstatus->axis_Position[i];
+        this->wco_coordinates[i] = grblstatus->axis_WCO[i];
+    }
 
     this->uint16_to_report_bytes(grblstatus->spindle_speed, 18, 19);
 
@@ -373,13 +376,13 @@ void Pendant_WHB04B6::grblstatus_received(GRBLSTATUS *grblstatus)
             case ProbeState::ProbeExistingFine:
                 // Fine existing tool successfully completed probing
                 // Save probe Z value
-                this->existing_tool_z = grblstatus->axis_Probe[2];
+                this->existing_tool_z = grblstatus->axis_Probe[PROBE_AXIS];
                 ProbeZ();
                 break;
             case ProbeState::ProbeNewFine:
                 // Fine existing tool successfully completed probing
                 // Save probe Z value
-                this->new_tool_z = grblstatus->axis_Probe[2];
+                this->new_tool_z = grblstatus->axis_Probe[PROBE_AXIS];
                 ProbeZ();
                 break;
             case ProbeState::ProbeNewCoarse:
@@ -611,15 +614,29 @@ void Pendant_WHB04B6::ProbeZ()
         break;
     case ProbeState::ProbeNewFine:
         // Probe has completed new probe
-/*         // Move Z to the location of the probe trigger/remove overshoot
-        String *cmd = new String(CMD_MOVE_M_COORD);
-        cmd->concat("Z");
-        cmd->concat(this->new_tool_z);
-        this->send_command(cmd);
- */
+        /*         // Move Z to the location of the probe trigger/remove overshoot
+                String *cmd = new String(CMD_MOVE_M_COORD);
+                cmd->concat("Z");
+                cmd->concat(this->new_tool_z);
+                this->send_command(cmd);
+         */
         // *************** Do something here *********************
-        // Send current Z to this->old_tool_z
-        // Uncomment cleanup when satisfied with height resetting
+        // WPos = MPos - WCS - G92 - TLO
+        //
+        // WPos.new should equal WPos.old after toolchange. G92 and TLO should not change
+        // WPos.new = MPos.new - WCS.new - G92 - TLO
+        // WPos.old = MPos.old - WCS.old - G92 - TLO
+        //
+        // WPos.new = WPos.old
+        // MPos.new - WCS.new - G92 - TLO = WPos.old - WCS.old - G92 - TLO
+        // MPos.new - WCS.new = WPos.old - WCS.old
+        // WCS.new = MPos.new - WPos.old + WSC.old
+        String *cmd = new String(CMD_RESET_Z);
+        // Calculate new WCS for Z
+        cmd->concat(this->new_tool_z - this->existing_tool_z - this->wco_coordinates[PROBE_AXIS]);
+        this->send_command(cmd);
+
+        // Cleanup probing
         EndProbeZ();
         // *************** Do something here *********************
     }

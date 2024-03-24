@@ -52,7 +52,7 @@ void show_dro(const pos_t *axes, const pos_t *wcos, bool isMpos, bool *limits, s
     for (int i = 0; i < n_axis; i++)
     {
         GrblStatus.axis_Position[i] = axes[i];
-        // GrblStatus.axis_WCO[i] = wcos[i];
+        GrblStatus.axis_WCO[i] = wcos[i];
     }
 }
 

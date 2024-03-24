@@ -17,7 +17,7 @@ struct GRBLSTATUS
   double axis_Position[MAX_N_AXIS];
   double axis_Probe[MAX_N_AXIS];
   // ignore axis_WCO for now as it is not currently used
-  // double    axis_WCO[MAX_N_AXIS];
+  double    axis_WCO[MAX_N_AXIS];
   bool isG91;
   bool isG21;
   uint32_t feedrate;
