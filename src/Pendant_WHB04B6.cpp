@@ -4,7 +4,7 @@
 // https://github.com/LinuxCNC/linuxcnc/tree/master/src/hal/user_comps/xhc-WHB04B6
 
 Pendant_WHB04B6::Pendant_WHB04B6(uint8_t dev_addr, uint8_t instance) : USBHIDPendant(dev_addr, instance),
-                                                                       axis_coordinates{0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
+                                                                       Mpos_coordinates{0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
                                                                        display_report_data{0x06, 0xfe, 0xfd, SEED, 0x81, 0x00, 0x00, 0x00,
 
                                                                                            0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -109,9 +109,9 @@ void Pendant_WHB04B6::send_display_report()
 #endif
 
     // update axis coordinates in display report data
-    this->double_to_report_bytes(axis_coordinates[0 + this->display_axis_offset], 4, 5, 6, 7);
-    this->double_to_report_bytes(axis_coordinates[1 + this->display_axis_offset], 8, 9, 10, 11);
-    this->double_to_report_bytes(axis_coordinates[2 + this->display_axis_offset], 12, 13, 14, 15);
+    this->double_to_report_bytes(Mpos_coordinates[0 + this->display_axis_offset], 4, 5, 6, 7);
+    this->double_to_report_bytes(Mpos_coordinates[1 + this->display_axis_offset], 8, 9, 10, 11);
+    this->double_to_report_bytes(Mpos_coordinates[2 + this->display_axis_offset], 12, 13, 14, 15);
 
     // update mode indicator in display report data (mode not used yet!)
     uint8_t mode_bits = 0;
@@ -326,7 +326,9 @@ void Pendant_WHB04B6::grblstatus_received(GRBLSTATUS *grblstatus)
     // Copy current position
     for (uint8_t i = 0; i < (grblstatus->nAxis); i++)
     {
-        this->axis_coordinates[i] = grblstatus->axis_Position[i];
+        // MPos = WPos + WCO
+        this->Mpos_coordinates[i] = grblstatus->axis_Position[i] +
+                                    (grblstatus->isMpos ? 0 : grblstatus->axis_WCO[i]);
         this->wco_coordinates[i] = grblstatus->axis_WCO[i];
     }
 
@@ -558,7 +560,7 @@ void Pendant_WHB04B6::ProbeZ()
         {
             // Start probing
             // Save coordinates
-            memcpy(this->saved_coordinates, this->axis_coordinates, this->nAxis * sizeof(double));
+            memcpy(this->saved_coordinates, this->Mpos_coordinates, this->nAxis * sizeof(double));
 
             // Save modal states
             this->savedG21 = this->isG21;
@@ -591,7 +593,7 @@ void Pendant_WHB04B6::ProbeZ()
         // Probe has completed existing coarse probe
         this->probe_state = ProbeState::ProbeExistingFine;
         this->send_command(CMD_PROBE_LIFT);
-        delay(1000);
+        delay(CMD_DELAY);
         this->send_command(CMD_SLOW_PROBE);
         break;
     case ProbeState::ProbeExistingFine:
@@ -609,35 +611,31 @@ void Pendant_WHB04B6::ProbeZ()
         // Probe has completed existing coarse probe
         this->probe_state = ProbeState::ProbeNewFine;
         this->send_command(CMD_PROBE_LIFT);
-        delay(1000);
+        delay(CMD_DELAY);
         this->send_command(CMD_SLOW_PROBE);
         break;
     case ProbeState::ProbeNewFine:
         // Probe has completed new probe
-        /*         // Move Z to the location of the probe trigger/remove overshoot
-                String *cmd = new String(CMD_MOVE_M_COORD);
-                cmd->concat("Z");
-                cmd->concat(this->new_tool_z);
-                this->send_command(cmd);
-         */
         // *************** Do something here *********************
         // WPos = MPos - WCS - G92 - TLO
         //
         // WPos.new should equal WPos.old after toolchange. G92 and TLO should not change
-        // WPos.new = MPos.new - WCS.new - G92 - TLO
-        // WPos.old = MPos.old - WCS.old - G92 - TLO
-        //
-        // WPos.new = WPos.old
-        // MPos.new - WCS.new - G92 - TLO = WPos.old - WCS.old - G92 - TLO
-        // MPos.new - WCS.new = WPos.old - WCS.old
-        // WCS.new = MPos.new - WPos.old + WSC.old
-        String *cmd = new String(CMD_RESET_Z);
+        // WPos.old = MPos.old - WCO
+
+        // Move Z to the location of the probe trigger/remove overshoot
+        String *cmd = new String(CMD_MOVE_M_COORD);
+        cmd->concat(PROBE_AXIS_CHAR);
+        cmd->concat(this->new_tool_z);
+        this->send_command(cmd);
+        delay(CMD_DELAY);
+
+        cmd = new String(CMD_RESET_Z);
         // Calculate new WCS for Z
-        cmd->concat(this->new_tool_z - this->existing_tool_z - this->wco_coordinates[PROBE_AXIS]);
+        cmd->concat(this->existing_tool_z - this->wco_coordinates[PROBE_AXIS]);
         this->send_command(cmd);
 
         // Cleanup probing
-        EndProbeZ();
+        // EndProbeZ();
         // *************** Do something here *********************
     }
 #if (PROBE_STATE_ECHO)
@@ -656,8 +654,11 @@ void Pendant_WHB04B6::EndProbeZ()
         String *cmd = new String(CMD_MOVE_M_COORD);
         for (int i = 0; i < this->nAxis; i++)
         {
-            cmd->concat(WHB04B6AxisLetters[i]);
-            cmd->concat(this->saved_coordinates[i]);
+            if (i != PROBE_AXIS)
+            {
+                cmd->concat(WHB04B6AxisLetters[i]);
+                cmd->concat(this->saved_coordinates[i]);
+            }
         }
         this->send_command(cmd);
 

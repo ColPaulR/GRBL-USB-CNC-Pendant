@@ -1,5 +1,4 @@
 #include <Arduino.h>
-
 #include "USBHIDPendant.h"
 #include "Pendant_WHB04B6.h"
 #include "GrblCode.h"
