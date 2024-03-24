@@ -118,7 +118,8 @@ private:
     ProbeExistingFine,      // Find probing existing and waiting on probe to complete
     ProbeExistingComplete,  // Move to safe Z and wait for toolchange to complete and user to continue
     ProbeNewCoarse,         // Coarse probing existing and waiting on probe to complete
-    ProbeNewFine           // Find probing existing and waiting on probe to complete
+    ProbeNewFine,           // Find probing existing and waiting on probe to complete
+    ProbeComplete           // Finished probing; safe to move back to original Z work position
   } probe_state = ProbeState::NoProbe;
 };
 

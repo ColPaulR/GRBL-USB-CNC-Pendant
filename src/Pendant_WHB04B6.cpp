@@ -634,8 +634,11 @@ void Pendant_WHB04B6::ProbeZ()
         cmd->concat(this->existing_tool_z - this->wco_coordinates[PROBE_AXIS]);
         this->send_command(cmd);
 
+        // Update probe_state
+        this->probe_state = ProbeState::ProbeComplete;
+
         // Cleanup probing
-        // EndProbeZ();
+        EndProbeZ();
         // *************** Do something here *********************
     }
 #if (PROBE_STATE_ECHO)
@@ -654,8 +657,9 @@ void Pendant_WHB04B6::EndProbeZ()
         String *cmd = new String(CMD_MOVE_M_COORD);
         for (int i = 0; i < this->nAxis; i++)
         {
-            if (i != PROBE_AXIS)
-            {
+            // Stay at Safe Z unless probing completed successfully
+            if ((i != PROBE_AXIS) || (this->probe_state == ProbeState::ProbeComplete))
+            {   
                 cmd->concat(WHB04B6AxisLetters[i]);
                 cmd->concat(this->saved_coordinates[i]);
             }
