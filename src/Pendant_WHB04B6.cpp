@@ -588,7 +588,7 @@ void Pendant_WHB04B6::ProbeZ()
         // Probe has completed existing coarse probe
         this->probe_state = ProbeState::ProbeExistingFine;
         this->send_command(CMD_PROBE_LIFT);
-        delay(5000);
+        delay(1000);
         this->send_command(CMD_SLOW_PROBE);
         break;
     case ProbeState::ProbeExistingFine:
@@ -606,7 +606,7 @@ void Pendant_WHB04B6::ProbeZ()
         // Probe has completed existing coarse probe
         this->probe_state = ProbeState::ProbeNewFine;
         this->send_command(CMD_PROBE_LIFT);
-        delay(5000);
+        delay(1000);
         this->send_command(CMD_SLOW_PROBE);
         break;
     case ProbeState::ProbeNewFine:
