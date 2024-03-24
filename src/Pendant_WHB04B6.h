@@ -152,9 +152,9 @@ const char WHB04B6ContinuousStopCommand[] = "\x85";
 const char WHB04B6MacroRunCommand[] = "$LocalFS/Run=P_Macro";
 const char CMD_SAFE_Z[] = "G53G0Z0";
 const char CMD_MOVE_M_COORD[] = "G53G0";
-const char CMD_GOTO_PROBE_XY[] = "G53G91X0Y0";
-const char CMD_FAST_PROBE[] = "G38.2Z-200F300";
-const char CMD_PROBE_LIFT[] = "$J=G91Z-5";
-const char CMD_SLOW_PROBE[] = "G38.2Z-200F75";
+const char CMD_GOTO_PROBE_XY[] = "G30G91X0Y0";
+const char CMD_FAST_PROBE[] = "G53G38.2Z-200F300";
+const char CMD_PROBE_LIFT[] = "$J=G91Z20F6000";
+const char CMD_SLOW_PROBE[] = "G53G38.2Z-200F75";
 // const char WHB04B6MacroRunCommand[] = "$RM=";
 #endif

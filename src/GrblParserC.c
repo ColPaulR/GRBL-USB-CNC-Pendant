@@ -1,6 +1,5 @@
 // Copyright (c) 2023 Mitch Bradley
 // Use of this source code is governed by a GPLv3 license that can be found in the LICENSE file.
-
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -430,14 +429,14 @@ extern "C"
         // The report wrapper, already removed, is [PRB:...]
         // The body for [PRB:1095.000,105.000,-49.880,0.000:1] is, for example,
         //   1095.000,105.000,-49.880,0.000:1
-
+        // Serial.println("Controller send PRB: message");
         char *next;
         size_t n_axis = 0;
         bool probe_success = false;
         pos_t axes[MAX_N_AXIS];
 
         // Separate position from success
-        if (!split(body, &next, '|'))
+        if (!split(body, &next, ':'))
             // Return if split fails
             return;
 

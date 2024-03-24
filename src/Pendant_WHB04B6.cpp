@@ -219,6 +219,7 @@ void Pendant_WHB04B6::on_key_press(uint8_t keycode)
     {
     case KEYCODE_RESET:
         // Soft Reset
+        this->probe_state = ProbeState::NoProbe;
         this->send_command(new String("$Bye"));
         break;
     case KEYCODE_STOP:
@@ -270,8 +271,14 @@ void Pendant_WHB04B6::on_key_press(uint8_t keycode)
                 break;
             case KEYCODE_M9_PROBEZ:
                 // Execute Probe Z here
+#if PROBE_STATE_ECHO
+                Serial.println("Probe button pressed");
+#endif
                 if (this->probe_state == ProbeState::NoProbe)
                     ProbeZ();
+                break;
+            case KEYCODE_FN:
+                // ignore function key press alone
                 break;
 #if SERIALDEBUG > 0
             default:
@@ -335,18 +342,17 @@ void Pendant_WHB04B6::grblstatus_received(GRBLSTATUS *grblstatus)
     this->state = grblstatus->spindle;
 
     // Save relative/absolute
-    this->isG91=grblstatus->isG91;
+    this->isG91 = grblstatus->isG91;
 #if (G91_PROCESSED_ECHO)
     Serial.println(grblstatus->isG91 ? "G91 Rel" : "G90 Abs");
 #endif
 
     // Save units
-    this->isG21=grblstatus->isG21;
+    this->isG21 = grblstatus->isG21;
 #if (G21_PROCESSED_ECHO)
     Serial.println(grblstatus->isG21 ? "G21 mm" : "G20 inches");
 #endif
 
-    this->send_display_report();
     // Only process probe data if the new data flag is set (should be 1 time event per G38 command)
     if (grblstatus->NewProbeFlag)
     {
@@ -385,6 +391,7 @@ void Pendant_WHB04B6::grblstatus_received(GRBLSTATUS *grblstatus)
             }
         }
     }
+    this->send_display_report();
 }
 void Pendant_WHB04B6::handle_continuous_check()
 {
@@ -461,14 +468,15 @@ void Pendant_WHB04B6::StartPauseButton()
 }
 void Pendant_WHB04B6::StopButton()
 {
+    // If probing, stop probing and cleanup
+    if (this->probe_state != ProbeState::NoProbe)
+        EndProbeZ();
+
     switch (this->state)
     {
     case State::Cycle:
         // Stop
         this->send_command(new String("!"));
-        // If probing, stop probing and cleanup
-        if (this->probe_state != ProbeState::NoProbe)
-            EndProbeZ();
         break;
     case State::Jog:
         // Stop
@@ -536,7 +544,7 @@ void Pendant_WHB04B6::SpindleToggle()
 void Pendant_WHB04B6::ProbeZ()
 {
 #if (PROBE_STATE_ECHO)
-    Serial.printf("Probe State was: %d", this->probe_state);
+    Serial.printf("Probe State was %d\r\n", this->probe_state);
 #endif
     switch (this->probe_state)
     {
@@ -580,9 +588,12 @@ void Pendant_WHB04B6::ProbeZ()
         // Probe has completed existing coarse probe
         this->probe_state = ProbeState::ProbeExistingFine;
         this->send_command(CMD_PROBE_LIFT);
+        delay(5000);
         this->send_command(CMD_SLOW_PROBE);
         break;
     case ProbeState::ProbeExistingFine:
+        // Probe has completed existing fine probe
+        this->probe_state = ProbeState::ProbeExistingComplete;
         // Probe has completed existing probe
         this->send_command(CMD_SAFE_Z);
         break;
@@ -595,24 +606,25 @@ void Pendant_WHB04B6::ProbeZ()
         // Probe has completed existing coarse probe
         this->probe_state = ProbeState::ProbeNewFine;
         this->send_command(CMD_PROBE_LIFT);
+        delay(5000);
         this->send_command(CMD_SLOW_PROBE);
         break;
     case ProbeState::ProbeNewFine:
         // Probe has completed new probe
-        // Move Z to the location of the probe trigger/remove overshoot
+/*         // Move Z to the location of the probe trigger/remove overshoot
         String *cmd = new String(CMD_MOVE_M_COORD);
         cmd->concat("Z");
         cmd->concat(this->new_tool_z);
         this->send_command(cmd);
-
+ */
         // *************** Do something here *********************
         // Send current Z to this->old_tool_z
         // Uncomment cleanup when satisfied with height resetting
-        // EndProbeZ();
+        EndProbeZ();
         // *************** Do something here *********************
     }
 #if (PROBE_STATE_ECHO)
-    Serial.printf(" is: %d\r\n", this->probe_state);
+    Serial.printf("Probe State is %d\r\n", this->probe_state);
 #endif
 }
 void Pendant_WHB04B6::EndProbeZ()
