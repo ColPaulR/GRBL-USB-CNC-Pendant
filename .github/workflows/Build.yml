@@ -26,9 +26,9 @@ jobs:
       uses: actions/setup-python@v1
     - name: Cache PlatformIO packages
       uses: actions/cache@v3
-      key: ${{ runner.os }}-build-${{ env.cache-name }}
         with:
           path: ~/.pio
+          key: ${{ runner.os }}-build-${{ env.cache-name }}
     #      restore-keys: |
     #        ${{ runner.os }}-build-${{ env.cache-name }}-
     #        ${{ runner.os }}-build-
