@@ -59,7 +59,8 @@ jobs:
     #    status_options: '--untracked-files=no'
     #    skip_dirty_check: true
     - name: Commit changes
-      run: cd .pio/build/pico
-      run: git add firmware.uf2
-      run: git commit -m "Update Firmware"
-      run: git push
+      run: |
+        cd .pio/build/pico
+        git add firmware.uf2
+        git commit -m "Update Firmware"
+        git push
