@@ -31,6 +31,10 @@ jobs:
     # It is important to first install the libraries before compiling, since otherwise compilation might fail to find the just-installed libraries
     - name: Install platformIO libraries
       run: pio pkg install
+    - name: Cache Gradle packages
+      uses: actions/cache@v3
+      with:
+      path: ~/.pio
     - name: Run PlatformIO
       run: platformio run
     # Export 
@@ -60,8 +64,8 @@ jobs:
     #    skip_dirty_check: true
     - name: Commit changes
       run: |
-        git config user.email "PaulRounsavall@yahoo.com"
-        git config user.name "Dr. Paul Rounsavall"
+        git config --global user.name "Dr. Paul Rounsavall"
+        git config --global user.email "PaulRounsavall@yahoo.com"
         git add -f .pio/build/pico/firmware.uf2
         git commit -m "Update Firmware"
         git push
