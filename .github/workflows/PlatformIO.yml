@@ -61,6 +61,6 @@ jobs:
     - name: Commit changes
       run: |
         cd .pio/build/pico
-        git add firmware.uf2
+        git add -f firmware.uf2
         git commit -m "Update Firmware"
         git push
