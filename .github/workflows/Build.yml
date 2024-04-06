@@ -24,13 +24,11 @@ jobs:
         submodules: 'true'
     - name: Set up Python
       uses: actions/setup-python@v1
-    #- name: Cache PlatformIO packages
-    #  uses: actions/cache@v3
-    #  cache-name: cache-pio-modules
-    #    with:
-    #      # npm cache files are stored in `~/.npm` on Linux/macOS
-    #      path: ~/.pio
-    #      key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+    - name: Cache PlatformIO packages
+      uses: actions/cache@v3
+      key: ${{ runner.os }}-build-${{ env.cache-name }}
+        with:
+          path: ~/.pio
     #      restore-keys: |
     #        ${{ runner.os }}-build-${{ env.cache-name }}-
     #        ${{ runner.os }}-build-
@@ -51,28 +49,10 @@ jobs:
         name: Firmware
         path: .pio/build/pico/firmware.uf2
         overwrite: true
-    #- name: Upload binaries to release
-    #  uses: svenstaro/upload-release-action@v2
-    #  with:
-    #    repo_token: ${{ secrets.GITHUB_TOKEN }}
-    #    file: .pio/build/pico/firmware.uf2
-    #    asset_name: firmware.uf2
-    #    tag: ${{ github.ref }}
-    #    overwrite: true
-    #    body: "This is a new binary"
-    #- name: Commit changes
-    #  uses: stefanzweifel/git-auto-commit-action@v4
-    #  with:
-    #    commit_message: Automated Change
-    #    branch: master
-    #    commit_options: '--no-verify --signoff'
-    #    commit_author: Author <actions@github.com>
-    #    status_options: '--untracked-files=no'
-    #    skip_dirty_check: true
-    - name: Commit changes
-      run: |
-        git config --global user.name "Dr. Paul Rounsavall"
-        git config --global user.email "PaulRounsavall@yahoo.com"
-        git add -f .pio/build/pico/firmware.uf2
-        git commit -m "Update Firmware"
-        git push
+    # - name: Commit changes
+    #   run: |
+    #     git config --global user.name "Dr. Paul Rounsavall"
+    #     git config --global user.email "PaulRounsavall@yahoo.com"
+    #     git add -f .pio/build/pico/firmware.uf2
+    #     git commit -m "Update Firmware"
+    #     git push
