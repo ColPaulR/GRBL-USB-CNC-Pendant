@@ -26,7 +26,7 @@ jobs:
       uses: actions/setup-python@v1
     - name: Cache PlatformIO packages
       uses: actions/cache@v3
-      cache-name: cache-pio-modules
+      #cache-name: cache-pio-modules
         with:
           # npm cache files are stored in `~/.npm` on Linux/macOS
           path: ~/.pio
