@@ -33,7 +33,6 @@ jobs:
       run: pio pkg install
     - name: Run PlatformIO
       run: platformio run
-
     # Export 
     - name: Upload firmware.uf2
       uses: actions/upload-artifact@v4
@@ -41,8 +40,7 @@ jobs:
         name: Firmware
         path: .pio/build/pico/firmware.uf2
         overwrite: true
-
-  - name: Upload binaries to release
+    - name: Upload binaries to release
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
@@ -51,4 +49,3 @@ jobs:
         tag: ${{ github.ref }}
         overwrite: true
         body: "This is a new binary"
-
