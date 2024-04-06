@@ -59,9 +59,10 @@ jobs:
     #    status_options: '--untracked-files=no'
     #    skip_dirty_check: true
     - name: Commit changes
+      uses: actions/checkout@v4
       run: |
-        git add -f .pio/build/pico/firmware.uf2
-        git commit -m "Update Firmware"
         git config user.email "PaulRounsavall@yahoo.com"
         git config user.name "Dr. Paul Rounsavall"
+        git add -f .pio/build/pico/firmware.uf2
+        git commit -m "Update Firmware"
         git push
