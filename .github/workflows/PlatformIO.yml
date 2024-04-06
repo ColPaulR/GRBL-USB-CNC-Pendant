@@ -38,5 +38,17 @@ jobs:
     - name: Upload firmware.uf2
       uses: actions/upload-artifact@v4
       with:
-        name: my-artifact
+        name: Firmware
         path: .pio/build/pico/firmware.uf2
+        overwrite: true
+
+  - name: Upload binaries to release
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: .pio/build/pico/firmware.uf2
+        asset_name: firmware.uf2
+        tag: ${{ github.ref }}
+        overwrite: true
+        body: "This is a new binary"
+
