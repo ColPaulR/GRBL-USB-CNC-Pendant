@@ -49,12 +49,17 @@ jobs:
     #    tag: ${{ github.ref }}
     #    overwrite: true
     #    body: "This is a new binary"
+    #- name: Commit changes
+    #  uses: stefanzweifel/git-auto-commit-action@v4
+    #  with:
+    #    commit_message: Automated Change
+    #    branch: master
+    #    commit_options: '--no-verify --signoff'
+    #    commit_author: Author <actions@github.com>
+    #    status_options: '--untracked-files=no'
+    #    skip_dirty_check: true
     - name: Commit changes
-      uses: stefanzweifel/git-auto-commit-action@v4
-      with:
-        commit_message: Automated Change
-        branch: master
-        commit_options: '--no-verify --signoff'
-        commit_author: Author <actions@github.com>
-        status_options: '--untracked-files=no'
-        skip_dirty_check: true
+      run: cd .pio/build/pico
+      run: git add firmware.uf2
+      run: git commit -m "Update Firmware"
+      run: git push
