@@ -23,11 +23,11 @@ jobs:
       with:
         submodules: 'true'
     - name: Set up Python
-      uses: actions/setup-python@v1
-      with:
-        python-version: '3.x'
+      uses: actions/setup-python@v5
+      #with:
+       # python-version: '3.x'
         # caching pip dependencies
-        cache: 'pip' 
+        #cache: 'pip' 
     - name: Cache PlatformIO packages
       uses: actions/cache@v3
       id: PlatformIO_cache
