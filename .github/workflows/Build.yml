@@ -39,6 +39,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
 #      with:
+        check-latest: false
 #        python-version: '3.x'
         # caching pip dependencies
  #       cache: 'pip' 
