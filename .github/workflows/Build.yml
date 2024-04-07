@@ -24,8 +24,8 @@ jobs:
         submodules: 'true'
     - name: Set up Python
       uses: actions/setup-python@v5
-      #with:
-       # python-version: '3.x'
+      with:
+        python-version: '3.x'
         # caching pip dependencies
         #cache: 'pip' 
     - name: Cache PlatformIO packages
