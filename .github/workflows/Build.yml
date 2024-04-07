@@ -28,12 +28,11 @@ jobs:
       with:
         path: |
           /home/runner/.platformio/          
-#          .pio
 #        key: ${{ runner.os }}-build-${{ env.cache-name }}
         key: ${{ runner.os }}-platformio
         restore-keys: |
           ${{ runner.os }}-platformio 
-          ${{ runner.os }}-build-${{ env.cache-name }}-
+          ${{ runner.os }}-build-${{ env.cache-name }}
           ${{ runner.os }}-build-
           ${{ runner.os }}-
     - name: Set up Python
@@ -42,12 +41,11 @@ jobs:
         check-latest: true
         python-version: '3.x'
         # caching pip dependencies
- #       cache: 'pip' 
+        cache: 'pip' 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install platformio
-        echo ~
     # It is important to first install the libraries before compiling, since otherwise compilation might fail to find the just-installed libraries
     - name: Install platformIO libraries
 #      run: pio pkg install
