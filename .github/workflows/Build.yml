@@ -25,8 +25,9 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v1
       with:
-        python-version: '3.12.2'
-        cache: 'pip' # caching pip dependencies
+        python-version: '3.x'
+        # caching pip dependencies
+        cache: 'pip' 
     - name: Cache PlatformIO packages
       uses: actions/cache@v3
       id: PlatformIO_cache
