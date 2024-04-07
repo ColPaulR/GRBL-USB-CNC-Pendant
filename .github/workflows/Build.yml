@@ -29,8 +29,8 @@ jobs:
       id: PlatformIO_cache
       with:
         path: |
-          ~/.platformio
-#          ~/.pio
+          .platformio
+          .pio
 #        key: ${{ runner.os }}-build-${{ env.cache-name }}
         key: ${{ runner.os }}-platformio
         restore-keys: |
