@@ -22,12 +22,6 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: 'true'
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.x'
-        # caching pip dependencies
-        cache: 'pip' 
     - name: Cache PlatformIO packages
       uses: actions/cache@v3
       id: PlatformIO_cache
@@ -42,6 +36,12 @@ jobs:
           ${{ runner.os }}-build-${{ env.cache-name }}-
           ${{ runner.os }}-build-
           ${{ runner.os }}-
+              - name: Set up Python
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+        # caching pip dependencies
+        cache: 'pip' 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
