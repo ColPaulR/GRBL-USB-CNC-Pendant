@@ -27,7 +27,7 @@ jobs:
       with:
         python-version: '3.x'
         # caching pip dependencies
-        #cache: 'pip' 
+        cache: 'pip' 
     - name: Cache PlatformIO packages
       uses: actions/cache@v3
       id: PlatformIO_cache
