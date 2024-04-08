@@ -4,6 +4,21 @@
 #include "GrblParserC.h"
 
 #define MAX_STATUS_LEN 10
+
+// use the Z axis, 3rd (index = 2) coordinate for probing
+#define PROBE_AXIS 2
+const char GRBLAxisLetters[] = {'X', 'Y', 'Z', 'A', 'B', 'C'};
+#define PROBE_AXIS_CHAR GRBLAxisLetters[PROBE_AXIS]
+#define CMD_DELAY 1000
+const char CMD_SAFE_Z[] = "G53G0Z0";
+const char CMD_MOVE_M_COORD[] = "G53G0";
+const char CMD_GOTO_PROBE_XY[] = "G30G91X0Y0";
+const char CMD_FAST_PROBE[] = "G53G38.2Z-200F300";
+const char CMD_PROBE_LIFT[] = "$J=G91Z2F6000";
+const char CMD_SLOW_PROBE[] = "G53G38.2Z-200F75";
+const char CMD_RESET_Z[] = "G10L20P0Z";
+
+
 extern bool is_report_type(char* , char** , const char* , const char*);
 extern size_t parse_axes(char*, pos_t*);
 
