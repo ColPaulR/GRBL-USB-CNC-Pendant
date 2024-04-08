@@ -4,8 +4,10 @@
 #include "GrblParserC.h"
 
 #define MAX_STATUS_LEN 10
-extern bool is_report_type(char *, char **, const char *, const char *);
-extern size_t parse_axes(char *, pos_t *);
+extern bool is_report_type(char* , char** , const char* , const char*);
+extern size_t parse_axes(char*, pos_t*);
+
+void PrintGrblStatusMsg(struct GRBLSTATUS *GrblStatus);
 
 struct GRBLSTATUS
 {
@@ -14,7 +16,8 @@ struct GRBLSTATUS
   int nAxis;
   double axis_Position[MAX_N_AXIS];
   double axis_Probe[MAX_N_AXIS];
-  double axis_WCO[MAX_N_AXIS];
+  // ignore axis_WCO for now as it is not currently used
+  double    axis_WCO[MAX_N_AXIS];
   bool isG91;
   bool isG21;
   uint32_t feedrate;
@@ -23,10 +26,8 @@ struct GRBLSTATUS
   bool flood;
   bool mist;
   bool ProbeSuccessFlag;
-  bool NewProbeFlag;
+  bool NewProbeFlag = 0;
 };
-
-// void PrintGrblStatusMsg(struct GRBLSTATUS *GrblStatus);
 
 // From FluidNC/FluidNC/src/Types.h with "enum class" changed to "enum"
 // From FluidNC/FluidNC/src/Report.cpp translates enum to string
@@ -34,7 +35,7 @@ struct GRBLSTATUS
 // System states. The state variable primarily tracks the individual functions
 // to manage each without overlapping. It is also used as a messaging flag for
 // critical events.
-enum State
+enum State : uint8_t
 {
   Idle = 0,    // Must be zero.
   Alarm,       // In alarm state. Locks out all g-code processes. Allows settings access.
