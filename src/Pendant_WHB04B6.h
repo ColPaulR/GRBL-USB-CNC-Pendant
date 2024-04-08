@@ -6,6 +6,7 @@
 
 #include "USBHIDPendant.h"
 #include "GrblCode.h"
+//#include "Probe.h"
 
 #define REPORT_INTERVAL 1000
 #define CMD_STEP_INTERVAL 100
@@ -67,25 +68,28 @@ public:
   void loop() override;
 
 private:
+  GRBLSTATUS GrblStatus;
+  // SAVESTATE PreProbeState;
+  // bool isG91, isG21;
+  // double Mpos_coordinates[MAX_N_AXIS];
+  // double wco_coordinates[MAX_N_AXIS];
+  // double probe_coordinates[MAX_N_AXIS];
+  // uint8_t nAxis;
+  // uint8_t selected_axis, display_axis_offset, selected_feed, spindle;
+  // unsigned machine_coordinates; // Duplicate isMPos?
+  uint8_t selected_axis, display_axis_offset, selected_feed;
+  // double existing_tool_z, new_tool_z;
+  uint8_t display_report_data[24];
+  uint8_t report_packet_next = 0;
+  unsigned long last_display_report;
+  int16_t jog;
+  uint8_t spindle_last;
+  ProbeState probe_state;
+
   void send_display_report();
   void set_report();
   void double_to_report_bytes(double val, uint8_t idx_intval_lower, uint8_t idx_intval_upper, uint8_t idx_frac_lower, uint8_t idx_frac_upper);
   void uint16_to_report_bytes(uint16_t val, uint8_t idx_lower, uint8_t idx_upper);
-  bool isG91, isG21;
-  bool savedG91, savedG21;
-  double Mpos_coordinates[MAX_N_AXIS];
-  double wco_coordinates[MAX_N_AXIS];
-  //double probe_coordinates[MAX_N_AXIS];
-  double saved_coordinates[MAX_N_AXIS];
-  double existing_tool_z, new_tool_z;
-  uint8_t nAxis;
-  uint8_t display_report_data[24];
-  uint8_t report_packet_next = 0;
-  uint8_t selected_axis, display_axis_offset, selected_feed, spindle;
-  unsigned long last_display_report;
-  int16_t jog;
-  unsigned machine_coordinates;
-  uint8_t spindle_last;
   void on_key_press(uint8_t keycode) override;
   void on_key_release(uint8_t keycode) override;
   void handle_continuous_check();
@@ -95,9 +99,6 @@ private:
   void StartPauseButton();
   void RunMacro(uint8_t MacroNumber);
   void SpindleToggle();
-  void ProbeZ();
-  void EndProbeZ();
-  void ProbeZNext();
 
   uint8_t continuous_axis = 0;
   bool continuous_direction;
@@ -110,59 +111,47 @@ private:
     Continuous
   } mode = Mode::Step;
 
-  enum class ProbeState : uint8_t
-  {
-    NoProbe,                // Not probing
-    MovedToProbeLocation,   // Moving to probe location and awaiting Start/Pause button press to probe existing tool
-    ProbeExistingCoarse,    // Coarse probing existing and waiting on probe to complete
-    ProbeExistingFine,      // Find probing existing and waiting on probe to complete
-    ProbeExistingComplete,  // Move to safe Z and wait for toolchange to complete and user to continue
-    ProbeNewCoarse,         // Coarse probing existing and waiting on probe to complete
-    ProbeNewFine,           // Find probing existing and waiting on probe to complete
-    ProbeComplete           // Finished probing; safe to move back to original Z work position
-  } probe_state = ProbeState::NoProbe;
-};
+  const uint16_t WHB04B6ContinuousFeeds[] = {6000, 6000, 6000, 6000, 6000, 6000};
+  const float WHB04B6StepSizes[] = {0.001, 0.01, 0.1, 1.0, 10, 100};
+  const float WHB04B6ContinuousMultipliers[] = {0.02, 0.05, 0.10, 0.30, 0.60, 1.00};
+  const char WHB04B6AxisLetters[] = {'X', 'Y', 'Z', 'A', 'B', 'C'};
+  const uint8_t WHB04B6AxisCount = 6;
+  const char WHB04B6JogCommands[] = "$J=G91";
 
-const uint16_t WHB04B6ContinuousFeeds[] = {6000, 6000, 6000, 6000, 6000, 6000};
-const float WHB04B6StepSizes[] = {0.001, 0.01, 0.1, 1.0, 10, 100};
-const float WHB04B6ContinuousMultipliers[] = {0.02, 0.05, 0.10, 0.30, 0.60, 1.00};
-const char WHB04B6AxisLetters[] = {'X', 'Y', 'Z', 'A', 'B', 'C'};
-const uint8_t WHB04B6AxisCount = 6;
-const char WHB04B6JogCommands[] = "$J=G91";
+  const uint16_t WHB04B6FeedRateMax[] =
+      {
+          10000, // X axis
+          10000, // Y axis
+          1000,  // Z axis
+          10000, // axis 4
+          10000, // axis 5
+          10000  // axis 6
+      };
+  const uint16_t WHB04B6FeedRateStep[] =
+      {
+          500, // X axis
+          500, // Y axis
+          50,  // Z axis
+          500, // axis 4
+          500, // axis 5
+          500  // axis 6
+      };
 
-const uint16_t WHB04B6FeedRateMax[] =
-    {
-        10000, // X axis
-        10000, // Y axis
-        1000,  // Z axis
-        10000, // axis 4
-        10000, // axis 5
-        10000  // axis 6
-};
-const uint16_t WHB04B6FeedRateStep[] =
-    {
-        500, // X axis
-        500, // Y axis
-        50,  // Z axis
-        500, // axis 4
-        500, // axis 5
-        500  // axis 6
-};
+  // use the Z axis, 3rd (index = 2) coordinate for probing
+  // #define PROBE_AXIS 2
+  // #define PROBE_AXIS_CHAR "Z"
+  // #define CMD_DELAY 1000
+  // const char WHB04B6ContinuousRunCommand[] = "M98 P\"pendant-continuous-run.g\" A\"%c\" F%u D%u";
+  // const char WHB04B6ContinuousStopCommand[] = "\x85";
+  // const char WHB04B6MacroRunCommand[] = "$LocalFS/Run=P_Macro";
+  // const char CMD_SAFE_Z[] = "G53G0Z0";
+  // const char CMD_MOVE_M_COORD[] = "G53G0";
+  // const char CMD_GOTO_PROBE_XY[] = "G30G91X0Y0";
+  // const char CMD_FAST_PROBE[] = "G53G38.2Z-200F300";
+  // const char CMD_PROBE_LIFT[] = "$J=G91Z2F6000";
+  // const char CMD_SLOW_PROBE[] = "G53G38.2Z-200F75";
+  // const char CMD_RESET_Z[] = "G10L20P0Z";
 
-// use the Z axis, 3rd (index = 2) coordinate for probing
-#define PROBE_AXIS 2
-#define PROBE_AXIS_CHAR "Z"
-#define CMD_DELAY 1000
-const char WHB04B6ContinuousRunCommand[] = "M98 P\"pendant-continuous-run.g\" A\"%c\" F%u D%u";
-const char WHB04B6ContinuousStopCommand[] = "\x85";
-const char WHB04B6MacroRunCommand[] = "$LocalFS/Run=P_Macro";
-const char CMD_SAFE_Z[] = "G53G0Z0";
-const char CMD_MOVE_M_COORD[] = "G53G0";
-const char CMD_GOTO_PROBE_XY[] = "G30G91X0Y0";
-const char CMD_FAST_PROBE[] = "G53G38.2Z-200F300";
-const char CMD_PROBE_LIFT[] = "$J=G91Z2F6000";
-const char CMD_SLOW_PROBE[] = "G53G38.2Z-200F75";
-const char CMD_RESET_Z[] = "G10L20P0Z";
+  // const char WHB04B6MacroRunCommand[] = "$RM=";
 
-// const char WHB04B6MacroRunCommand[] = "$RM=";
 #endif

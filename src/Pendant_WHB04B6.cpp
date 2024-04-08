@@ -1,20 +1,27 @@
 #include "Pendant_WHB04B6.h"
 #include "SerialDebug.h"
+
 // For Reference:
 // https://github.com/LinuxCNC/linuxcnc/tree/master/src/hal/user_comps/xhc-WHB04B6
 
-Pendant_WHB04B6::Pendant_WHB04B6(uint8_t dev_addr, uint8_t instance) : USBHIDPendant(dev_addr, instance),
-                                                                       Mpos_coordinates{0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
-                                                                       display_report_data{0x06, 0xfe, 0xfd, SEED, 0x81, 0x00, 0x00, 0x00,
+Pendant_WHB04B6::Pendant_WHB04B6(uint8_t dev_addr, uint8_t instance) 
+// : USBHIDPendant(dev_addr, instance)
+                                                                    //    display_report_data{0x06, 0xfe, 0xfd, SEED, 0x81, 0x00, 0x00, 0x00,
 
-                                                                                           0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                                                                                           0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-                                                                       jog(0),
-                                                                       selected_axis(0),
-                                                                       display_axis_offset(0),
-                                                                       selected_feed(0),
-                                                                       spindle_last(0)
+                                                                    //                        0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                                                    //                        0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+                                                                    //    jog(0),
+                                                                    //    selected_axis(0),
+                                                                    //    display_axis_offset(0),
+                                                                    //    selected_feed(0),
+                                                                    //    spindle_last(0)
+                                                                    //    probe_state(ProbeState::NoProbe)
 {
+    for (int i=0; i<=MAX_N_AXIS; i++)
+        GrblStatus->axis_Position[i] = 0.0;
+
+    probe_state = NoProbe;
+
     this->send_display_report();
     // DEMO DATA
     // axis_coordinates[0] = -965.2345678;
@@ -109,9 +116,9 @@ void Pendant_WHB04B6::send_display_report()
 #endif
 
     // update axis coordinates in display report data
-    this->double_to_report_bytes(Mpos_coordinates[0 + this->display_axis_offset], 4, 5, 6, 7);
-    this->double_to_report_bytes(Mpos_coordinates[1 + this->display_axis_offset], 8, 9, 10, 11);
-    this->double_to_report_bytes(Mpos_coordinates[2 + this->display_axis_offset], 12, 13, 14, 15);
+    this->double_to_report_bytes(this->GrblStatus.axis_Position[0 + this->display_axis_offset], 4, 5, 6, 7);
+    this->double_to_report_bytes(this->GrblStatus.axis_Position[1 + this->display_axis_offset], 8, 9, 10, 11);
+    this->double_to_report_bytes(this->GrblStatus.axis_Position[2 + this->display_axis_offset], 12, 13, 14, 15);
 
     // update mode indicator in display report data (mode not used yet!)
     uint8_t mode_bits = 0;
@@ -120,7 +127,7 @@ void Pendant_WHB04B6::send_display_report()
     this->display_report_data[R_IDX(3)] = (this->display_report_data[R_IDX(3)] & (~0x3)) | mode_bits;
 
     // Display work coordinates or machine coordinates based on GRBL status response (WPOS or MPOS). To switch, toggle $10
-    if (this->machine_coordinates)
+    if (this->GrblStatus.isMpos)
         // Clear work coordiantes bit
         this->display_report_data[R_IDX(3)] = (this->display_report_data[R_IDX(3)] & (~0x80));
     else
@@ -275,7 +282,7 @@ void Pendant_WHB04B6::on_key_press(uint8_t keycode)
                 Serial.println("Probe button pressed");
 #endif
                 if (this->probe_state == ProbeState::NoProbe)
-                    ProbeZ();
+                    ProbeZ(&this);
                 break;
             case KEYCODE_FN:
                 // ignore function key press alone
@@ -379,17 +386,17 @@ void Pendant_WHB04B6::grblstatus_received(GRBLSTATUS *grblstatus)
                 // Fine existing tool successfully completed probing
                 // Save probe Z value
                 this->existing_tool_z = grblstatus->axis_Probe[PROBE_AXIS];
-                ProbeZ();
+                ProbeZ(&this);
                 break;
             case ProbeState::ProbeNewFine:
                 // Fine existing tool successfully completed probing
                 // Save probe Z value
                 this->new_tool_z = grblstatus->axis_Probe[PROBE_AXIS];
-                ProbeZ();
+                ProbeZ(&this);
                 break;
             case ProbeState::ProbeNewCoarse:
             case ProbeState::ProbeExistingCoarse:
-                ProbeZ();
+                ProbeZ(&this);
                 break;
                 // default:
                 // Unexpected probe response not triggered by pendant. Ignore
@@ -462,7 +469,7 @@ void Pendant_WHB04B6::StartPauseButton()
         case ProbeState::MovedToProbeLocation:
         case ProbeState::ProbeExistingComplete:
             // Probing is awaiting button press
-            ProbeZ();
+            ProbeZ(&this);
             break;
         }
 #if SERIALDEBUG > 0
@@ -475,7 +482,7 @@ void Pendant_WHB04B6::StopButton()
 {
     // If probing, stop probing and cleanup
     if (this->probe_state != ProbeState::NoProbe)
-        EndProbeZ();
+        EndProbeZ(&this);
 
     switch (this->state)
     {
@@ -519,6 +526,7 @@ void Pendant_WHB04B6::RunMacro(uint8_t MacroNumber)
         this->send_command(cmd);
     }
 }
+
 void Pendant_WHB04B6::SpindleToggle()
 {
     if (this->spindle == 0)
@@ -544,137 +552,5 @@ void Pendant_WHB04B6::SpindleToggle()
         // Spindle is spinning; save directiong and stop
         this->spindle_last = this->spindle;
         this->send_command(new String("M5"));
-    }
-}
-void Pendant_WHB04B6::ProbeZ()
-{
-#if (PROBE_STATE_ECHO)
-    Serial.printf("Probe State was %d\r\n", this->probe_state);
-#endif
-    switch (this->probe_state)
-    {
-    case ProbeState::NoProbe:
-        // Only probe if controller is not executing something else
-        // Entered this state by ProbeZ button press
-        if ((this->state == State::Idle) || (this->state == State::Hold))
-        {
-            // Start probing
-            // Save coordinates
-            memcpy(this->saved_coordinates, this->Mpos_coordinates, this->nAxis * sizeof(double));
-
-            // Save modal states
-            this->savedG21 = this->isG21;
-            this->savedG91 = this->isG91;
-
-            // Switch to relative move mode if required
-            if (!this->savedG91)
-                this->send_command("G91");
-
-            // Switch to mm if required
-            if (!this->savedG21)
-                this->send_command("G21");
-
-            // Raise Z to safe move height
-            this->send_command(CMD_SAFE_Z);
-
-            // Goto probe position saved in G30
-            this->send_command(CMD_GOTO_PROBE_XY);
-
-            // Wait for start/pause key press
-            this->probe_state = ProbeState::MovedToProbeLocation;
-            break;
-        }
-    case ProbeState::MovedToProbeLocation:
-        // User pressed Start/Pause button after moving to probe position
-        this->probe_state = ProbeState::ProbeExistingCoarse;
-        this->send_command(CMD_FAST_PROBE);
-        break;
-    case ProbeState::ProbeExistingCoarse:
-        // Probe has completed existing coarse probe
-        this->probe_state = ProbeState::ProbeExistingFine;
-        this->send_command(CMD_PROBE_LIFT);
-        delay(CMD_DELAY);
-        this->send_command(CMD_SLOW_PROBE);
-        break;
-    case ProbeState::ProbeExistingFine:
-        // Probe has completed existing fine probe
-        this->probe_state = ProbeState::ProbeExistingComplete;
-        // Probe has completed existing probe
-        this->send_command(CMD_SAFE_Z);
-        break;
-    case ProbeState::ProbeExistingComplete:
-        // User pressed Start/Pause button after moving to probe position
-        this->probe_state = ProbeState::ProbeNewCoarse;
-        this->send_command(CMD_FAST_PROBE);
-        break;
-    case ProbeState::ProbeNewCoarse:
-        // Probe has completed existing coarse probe
-        this->probe_state = ProbeState::ProbeNewFine;
-        this->send_command(CMD_PROBE_LIFT);
-        delay(CMD_DELAY);
-        this->send_command(CMD_SLOW_PROBE);
-        break;
-    case ProbeState::ProbeNewFine:
-        // Probe has completed new probe
-        // *************** Do something here *********************
-        // WPos = MPos - WCS - G92 - TLO
-        //
-        // WPos.new should equal WPos.old after toolchange. G92 and TLO should not change
-        // WPos.old = MPos.old - WCO
-
-        // Move Z to the location of the probe trigger/remove overshoot
-        String *cmd = new String(CMD_MOVE_M_COORD);
-        cmd->concat(PROBE_AXIS_CHAR);
-        cmd->concat(this->new_tool_z);
-        this->send_command(cmd);
-        delay(CMD_DELAY);
-
-        cmd = new String(CMD_RESET_Z);
-        // Calculate new WCS for Z
-        cmd->concat(this->existing_tool_z - this->wco_coordinates[PROBE_AXIS]);
-        this->send_command(cmd);
-
-        // Update probe_state
-        this->probe_state = ProbeState::ProbeComplete;
-
-        // Cleanup probing
-        EndProbeZ();
-        // *************** Do something here *********************
-    }
-#if (PROBE_STATE_ECHO)
-    Serial.printf("Probe State is %d\r\n", this->probe_state);
-#endif
-}
-void Pendant_WHB04B6::EndProbeZ()
-{
-    // Don't take any action unless there is a probe in progress
-    if (this->probe_state != ProbeState::NoProbe)
-    {
-        // Currently probing. Raise Z to safe move height
-        this->send_command(CMD_SAFE_Z);
-
-        // Goto position saved at start of probe. Assume default feedrate
-        String *cmd = new String(CMD_MOVE_M_COORD);
-        for (int i = 0; i < this->nAxis; i++)
-        {
-            // Stay at Safe Z unless probing completed successfully
-            if ((i != PROBE_AXIS) || (this->probe_state == ProbeState::ProbeComplete))
-            {   
-                cmd->concat(WHB04B6AxisLetters[i]);
-                cmd->concat(this->saved_coordinates[i]);
-            }
-        }
-        this->send_command(cmd);
-
-        // Switch G90/G91 if required
-        if (this->isG91 != this->savedG91)
-            this->send_command((this->savedG91 ? "G91" : "G90"));
-
-        // Switch G20/G21 if required
-        if (this->isG21 != this->savedG21)
-            this->send_command((this->savedG21 ? "G21" : "G20"));
-
-        // Done with probing. Set state to NOPROBE
-        this->probe_state = ProbeState::NoProbe;
     }
 }
