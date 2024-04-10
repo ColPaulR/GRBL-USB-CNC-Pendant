@@ -27,8 +27,8 @@ jobs:
       id: PlatformIO_cache
       with:
         path: |
-          /home/runner/.cache/pip
-          /home/runner/.platformio/.cache
+          /home/runner/.cache
+          /home/runner/.platformio
           #/home/runner/.platformio/          
         key: ${{ runner.os }}-platformio
     - name: Set up Python
