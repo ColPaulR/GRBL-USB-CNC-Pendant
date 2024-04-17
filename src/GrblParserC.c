@@ -397,23 +397,25 @@ static void parse_probe(char* body) {
     // The report wrapper, already removed, is [PRB:...]
     // The body for [PRB:1095.000,105.000,-49.880,0.000:1] is, for example,
     //   1095.000,105.000,-49.880,0.000:1
-    // Serial.println("Controller send PRB: message");
+
     char*  next;
     size_t n_axis        = 0;
     bool   probe_success = false;
     pos_t  axes[MAX_N_AXIS];
 
     // Separate position from success
-    if (!split(body, &next, ':'))
+    if (!split(body, &next, '|')) {
         // Return if split fails
         return;
+    }
 
     // Process positon
     n_axis = parse_axes(body, axes);
 
     // Process success flag
-    if (*next == '1')
+    if (*next == '1') {
         probe_success = true;
+    }
 
     show_probe(axes, probe_success, n_axis);
 }
@@ -599,6 +601,7 @@ static void parse_report() {
         parse_probe(body);
         return;
     }
+
     handle_other(_report);
 }
 // Receive an incoming byte
@@ -682,7 +685,7 @@ void __attribute__((weak)) end_status_report() {}
 void __attribute__((weak)) debug_putchar(char c) {}
 void __attribute__((weak)) debug_print(const char* msg) {}
 void __attribute__((weak)) debug_println(const char* msg) {}
-int __attribute__((weak))  debug_getchar() {
+int __attribute__((weak)) debug_getchar() {
     return -1;
 }
 

@@ -110,20 +110,8 @@ void show_gcode_modes(struct gcode_modes *modes)
     if (!strcmp((modes->spindle), "CCW"))
         GrblStatus.spindle = 2;
 
-    // Coolant values
-    if (!strcmp(modes->coolant, "Off"))
-    {
-        GrblStatus.mist = 0;
-        GrblStatus.flood = 0;
-    }
-    if (!strcmp(modes->coolant, "Mist"))
-    {
-        GrblStatus.mist = 1;
-    }
-    if (!strcmp(modes->coolant, "Flood"))
-    {
-        GrblStatus.flood = 1;
-    }
+    GrblStatus.mist=(!strcmp(modes->mist, "On"));
+    GrblStatus.flood=(!strcmp(modes->flood, "On"));
 
     // Inches or mm?
     if (!strcmp(modes->units, "In"))
