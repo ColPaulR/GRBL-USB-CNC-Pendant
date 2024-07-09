@@ -3,10 +3,10 @@
 (work in progress / use at own risk)
 
 This project is inspired and partly based on:
-- [Duet USB CNC Pendant](https://github.com/hurzhurz/Duet-USB-CNC-Pendant)
+- [**Duet USB CNC Pendant**](https://github.com/hurzhurz/Duet-USB-CNC-Pendant)
 - [**Duet CNC-Pendant-Firmware**](https://github.com/Duet3D/CNC-Pendant-Firmware)
-- [Adafruit TinyUSB HID Example](https://github.com/adafruit/Adafruit_TinyUSB_Arduino/tree/master/examples/DualRole/HID/hid_device_report)
-- [PendantsForFluidNC's GrblParserC library](https://github.com/bdring/PendantsForFluidNC)
+- [**Adafruit TinyUSB HID Example**](https://github.com/adafruit/Adafruit_TinyUSB_Arduino/tree/master/examples/DualRole/HID/hid_device_report)
+- [**GrblParserC**](https://github.com/MitchBradley/GrblParser)
 
 It uses the GPIO ports of a **Raspberry Pi Pico** to create an USB Host Port (using [Pico-PIO-USB](https://github.com/sekigon-gonnoc/Pico-PIO-USB)) to listen for input from USB devices and generates G-Code commands to control a Duet based CNC machine.
 
