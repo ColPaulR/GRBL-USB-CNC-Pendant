@@ -108,6 +108,9 @@ void loop1()
   {
     last_mount_check = millis();
     check_devices_still_mounted();
+    #if (KEEPALIVE)
+      Serial.printf("Mounted @ %d\r\n",now);
+    #endif
   }
 
   // check for new Grbl status messages from Serial routines on other core
