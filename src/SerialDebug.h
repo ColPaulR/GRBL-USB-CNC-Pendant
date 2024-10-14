@@ -16,3 +16,4 @@
 #define PROBE_STATUS_ECHO 1
 #define MACRO_EXEC_ECHO 0
 #define KEEPALIVE 1
+#define WATCHDOG 0

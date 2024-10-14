@@ -79,7 +79,7 @@ void setup1()
   USBHost.begin(1);
 }
 
-void check_devices_still_mounted()
+void check_devices_still_mounted(unsigned long now)
 {
   for (uint8_t i = 0; i < MAX_DEV; i++)
   {
@@ -88,10 +88,18 @@ void check_devices_still_mounted()
       if (!tuh_hid_mounted(devices[i].dev_addr, devices[i].instance))
       {
 #if SERIALDEBUG > 0
-        Serial.printf("HID device address = %d, instance = %d no more mounted\r\n", devices[i].dev_addr, devices[i].instance);
+        Serial.printf("HID device address = %d, instance = %d no longer mounted\r\n", devices[i].dev_addr, devices[i].instance);
 #endif
         delete devices[i].object;
+        devices[i].dev_addr = 0;
+        devices[i].instance = 0;
         devices[i].object = 0;
+      }
+      else
+      {
+#if (KEEPALIVE)
+        Serial.printf("Mounted @ %d\r\n", now);
+#endif
       }
     }
   }
@@ -107,10 +115,7 @@ void loop1()
   if ((now - last_mount_check) > MOUNT_CHECK_INTERVAL)
   {
     last_mount_check = millis();
-    check_devices_still_mounted();
-    #if (KEEPALIVE)
-      Serial.printf("Mounted @ %d\r\n",now);
-    #endif
+    check_devices_still_mounted(last_mount_check);
   }
 
   // check for new Grbl status messages from Serial routines on other core

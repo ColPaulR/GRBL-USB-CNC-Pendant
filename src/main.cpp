@@ -12,7 +12,7 @@
 #define GRBLSerialBaud 115200
 
 // Autoreporting in not working reliably. Using slow update interval plus autoreporting to enforce response
-// Autoreporting seems to work once polling response is processed. 
+// Autoreporting seems to work once polling response is processed.
 // Use Polling at defined non-zero interval
 #define GRBL_QUERY_INTERVAL 1000
 // Expect autoreporting
@@ -47,9 +47,10 @@ void setup()
   // Turn on auto reporting and set repprt interval
   GRBLSerial.println("/n$RI=500");
 
-  // Force status update for initial status
-  GRBLSerial.write('?');
-  GRBLSerial.println("$G");
+  // Don't need to force initial update as watchdog will trigger 1st pass 
+  // // Force status update for initial status
+  // GRBLSerial.write('?');
+  // GRBLSerial.println("$G");
 }
 
 void loop()
@@ -94,12 +95,16 @@ void loop()
   // Uncomment below if periodic requests are needed
   unsigned long now = millis();
 
-  // Query status if no recent activity 
+  // Query status if no recent activity
   if ((now - last_grbl_recv) > GRBL_QUERY_INTERVAL)
   {
+// Autoreporting should prevent watchdog from timing out. Print error if needed
+#if WATCHDOG > 0
+    Serial.println("Status watchdog timed out. Requesting status updates.");
+#endif
     // Query status
     GRBLSerial.write('?');
     GRBLSerial.println("$G");
-    last_grbl_recv = millis();
+    last_grbl_recv = now;
   }
 }
