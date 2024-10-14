@@ -43,6 +43,10 @@ void setup()
   GRBLSerial.begin(GRBLSerialBaud);
   // Wait until GRBLSerial is available
   delay(100);
+
+  // Reset autoreporting interval and turn on autoreporting
+  GRBLSerial.println("$RI=500");
+  
   // Force status update for initial status
   GRBLSerial.write('?');
   GRBLSerial.println("$G");
